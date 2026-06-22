@@ -1,0 +1,127 @@
+version: "3.9"
+
+services:
+  postgis:
+    image: postgis/postgis:16-3.4
+    container_name: geokurra-postgis
+    environment:
+      POSTGRES_USER: geokurra
+      POSTGRES_PASSWORD: geokurra
+      POSTGRES_DB: geokurra
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+      - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U geokurra"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - geokurra-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: geokurra-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - geokurra-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: geokurra-backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://geokurra:geokurra@postgis:5432/geokurra
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-change-this-secret-in-production}
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8000
+      - BHUNakSHA_BASE_URL=https://bhunaksha.bihar.gov.in
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgis:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - backend_media:/app/media
+      - backend_reports:/app/reports
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4"
+    networks:
+      - geokurra-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: geokurra-frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - geokurra-network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: geokurra-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - geokurra-network
+    restart: unless-stopped
+
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: geokurra-celery
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://geokurra:geokurra@postgis:5432/geokurra
+      - REDIS_URL=redis://redis:6379/0
+    command: celery -A app.celery_app worker --loglevel=info
+    depends_on:
+      - postgis
+      - redis
+      - backend
+    volumes:
+      - backend_media:/app/media
+      - backend_reports:/app/reports
+    networks:
+      - geokurra-network
+    restart: unless-stopped
+
+networks:
+  geokurra-network:
+    driver: bridge
+
+volumes:
+  postgis_data:
+  redis_data:
+  backend_media:
+  backend_reports:
