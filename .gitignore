@@ -41,27 +41,20 @@ docker-compose.override.yml
 # GIS
 *.gpkg
 *.gdb/
-*.shp.xml
 
-# Reports
-*.pdf
-*.png
-!static/images/
+# Uploads
+uploads/*
+!uploads/.gitkeep
 
 # Logs
 *.log
 logs/
-
-# Uploads
-uploads/
-media/
 
 # Testing
 .coverage
 htmlcov/
 .pytest_cache/
 
-# ML Models
-models/*.pt
-models/*.bin
-models/*.onnx
+# Playwright
+playwright-report/
+test-results/

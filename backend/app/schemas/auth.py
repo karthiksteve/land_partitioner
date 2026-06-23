@@ -1,13 +1,12 @@
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
 
 class LoginRequest(BaseModel):
-    username: str
-    password: str
+    username: str = Field(..., min_length=1)
+    password: str = Field(..., min_length=1)
 
 
 class TokenResponse(BaseModel):
@@ -16,25 +15,23 @@ class TokenResponse(BaseModel):
 
 
 class RegisterRequest(BaseModel):
-    email: str
-    username: str
+    email: EmailStr
+    username: str = Field(..., min_length=3, max_length=100)
     password: str = Field(..., min_length=6)
-    full_name: str
-    phone: Optional[str] = None
-    role: str = "citizen"
+    full_name: str = Field(..., min_length=1, max_length=255)
+    phone: Optional[str] = Field(None, max_length=20)
+    role: str = Field(default="citizen", pattern="^(admin|officer|citizen)$")
 
 
 class UserResponse(BaseModel):
-    id: UUID
+    id: str
     email: str
     username: str
     full_name: str
     phone: Optional[str] = None
-    is_active: bool
-    is_superuser: bool
     role: str
-    created_at: datetime
-    updated_at: datetime
+    is_active: bool
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

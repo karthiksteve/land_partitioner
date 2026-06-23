@@ -1,6 +1,6 @@
-# Land Partitioner
+# GeoKurra – Digital Land Information Portal
 
-**AI-Powered Rule 109 Compliant Land Partition Decision Support System**
+**Phase 1: Parcel Retrieval & Satellite Visualization Portal**
 
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com)
@@ -8,162 +8,117 @@
 [![PostGIS](https://img.shields.io/badge/PostGIS-3.4-336791.svg)](https://postgis.net)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-> **Automate the partition of jointly owned agricultural land under Uttar Pradesh Revenue Code Section 116 and Rule 109.**
-> 
-> Integrates GIS, cadastral maps, BhuNaksha data, and optimization algorithms to generate legally compliant partition proposals with explainable AI.
+> **A government-style web portal for retrieving cadastral parcel information from Bihar BhuNaksha, displaying parcels on satellite imagery, and downloading land records.**
+>
+> Built under the **Uttar Pradesh Revenue Code Section 116** framework for digital land information management.
 
 ---
 
 ## 📋 Table of Contents
 
-- [Problem Statement](#-problem-statement)
+- [Overview](#-overview)
 - [Features](#-features)
-- [Legal Framework](#-legal-framework)
 - [System Architecture](#-system-architecture)
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
+- [User Workflow](#-user-workflow)
 - [Quick Start (Docker)](#-quick-start-docker)
 - [Manual Setup](#-manual-setup)
 - [API Documentation](#-api-documentation)
 - [Database Schema](#-database-schema)
-- [Scoring System](#-scoring-system)
-- [Module Documentation](#-module-documentation)
+- [BhuNaksha Integration](#-bhunaksha-integration)
+- [GIS Map Viewer](#-gis-map-viewer)
+- [Document Management](#-document-management)
+- [Security](#-security)
 - [Testing](#-testing)
 - [Deployment](#-deployment)
-- [Sample Data](#-sample-data)
-- [Security](#-security)
-- [Contributing](#-contributing)
+- [Screenshots](#-screenshots)
 - [License](#-license)
 
 ---
 
-## 🎯 Problem Statement
+## 🎯 Overview
 
-In India, particularly under the **Uttar Pradesh Revenue Code Section 116** and **Rule 109**, jointly owned agricultural land must be partitioned fairly among co-tenure holders.
+GeoKurra Phase 1 provides a **government-style digital land information portal** that allows citizens and officers to:
 
-### Current Challenges:
+1. **Search for a parcel** using District, Circle, Mouza, and Plot Number
+2. **Retrieve parcel information** from Bihar BhuNaksha (or simulated data)
+3. **View parcel geometry** overlaid on satellite imagery
+4. **Download available documents** (Parcel PDF, Land Record, ROR)
+5. **Store parcel information** locally in PostGIS for future reference
 
-| Issue | Description |
-|-------|-------------|
-| 📋 Manual Kurra Preparation | Partition proposals are prepared manually, leading to delays |
-| 🛤️ Subjective Road Frontage | Road frontage distribution lacks systematic methodology |
-| 💰 Unbalanced Commercial Value | Commercial value balancing is subjective and inconsistent |
-| 📍 Possession Ignored | Existing possession is not systematically analyzed |
-| 🔄 Limited Alternatives | Multiple partition alternatives are not generated |
-| 🤔 No Explainability | There is no explainable GIS-based decision support system |
-
-### Our Solution
-
-**Land Partitioner** automatically generates legally compliant partition proposals using:
-- GIS and cadastral maps
-- BhuNaksha data integration
-- Voronoi-based spatial optimization
-- Multi-objective partition algorithms
-- Explainable AI for legal reasoning
+This phase focuses **exclusively** on parcel retrieval and visualization. No land partitioning, Rule 109 compliance, AI recommendations, or optimization algorithms are implemented.
 
 ---
 
 ## ✨ Features
 
-### 🗺️ GIS Mapping
-- **Multi-layer map**: Satellite, Hybrid, OpenStreetMap, Revenue Layer
-- **Parcel visualization**: Boundary, area, vertices, centroid
-- **Ownership overlay**: Display existing possession per owner
-- **Plan comparison**: Side-by-side visualization of Plan A/B/C
-- **Road frontage analysis**: Calculate road boundary length per allotment
-- **Commercial zone mapping**: Identify high-value areas
+### 🔍 Parcel Search
+- Search by District, Circle, Mouza, and Plot Number
+- Integration with Bihar BhuNaksha cadastral database
+- Automatic PNIU generation and storage
+- Real-time validation of inputs
 
-### 🏗️ Partition Engine
-| Plan | Objective | Algorithm |
-|------|-----------|-----------|
-| **Plan A** | Compactness Optimized | Equal-area Voronoi + Polsby-Popper |
-| **Plan B** | Possession Optimized | Possession-weighted Voronoi |
-| **Plan C** | Commercial Optimized | Commercial-weighted Voronoi |
+### 🗺️ GIS Map Viewer
+- Satellite imagery base layer (Google Maps / OpenStreetMap)
+- Parcel boundary overlay with highlighting
+- Zoom, pan, and fullscreen controls
+- Coordinate display on hover
+- Multi-layer support (Satellite, Boundary, Labels)
 
-### ⚖️ Legal Compliance
-- **Rule 109(a)**: Share proportion compliance checker
-- **Rule 109(b)**: Compactness verification (Polsby-Popper index)
-- **Rule 109(c)**: Land quality balance across allottees
-- **Rule 109(d)**: Field preservation scoring
-- **Rule 109(e)**: Possession preservation analyzer
-- **Rule 109(f)**: Commercial fairness (road frontage distribution)
-- **Rule 109(g)**: Family settlement respect
+### 📄 Document Management
+- Automatic document discovery from BhuNaksha
+- Download Parcel PDF, Land Record PDF, ROR PDF
+- GeoJSON export of parcel geometry
+- Document metadata tracking
 
-### 🤖 AI Recommendations
-- Plan ranking (Best → Second → Third)
-- Explainable reasoning per parcel allotment
-- Rule 109 condition analysis for each plan
-- Trade-off identification between alternative plans
-- **No external LLM required** — pure rule-based reasoning
+### 🏛️ Government-Style Dashboard
+- Clean, official government portal design
+- Role-based access (Admin, Officer, Citizen)
+- Search history and recent parcels
+- Quick access to GIS Viewer and Documents
 
-### 📄 Reports & Documents
-| Document | Contents |
-|----------|----------|
-| **Kurra Report** | Parcel details, owners, shares, GIS maps, frontage analysis, Rule compliance |
-| **Preliminary Decree** | Ownership shares, valuation, legal references |
-| **Final Decree** | Metes and bounds, final parcel allocation, updated revenue records |
-
-### 📤 Multi-Format Export
-PDF · GeoJSON · KML · Shapefile · CSV · JSON
-
-### 🌐 BhuNaksha Integration
-- Direct API integration with Bihar BhuNaksha
-- Plot geometry extraction via PNIU
-- Playwright browser automation fallback
-- Extensible architecture for UP, MP, Rajasthan
-
----
-
-## ⚖️ Legal Framework
-
-### Section 116 — Suit for Division of Holding
-- Co-tenure holders management
-- Joint holdings with trees, wells, tubewells, improvements
-- Valuation and proportional compensation for indivisible improvements
-
-### Rule 109 Compliance Matrix
-
-| Clause | Requirement | Implementation | Scoring |
-|--------|-------------|----------------|---------|
-| **109(a)** | Proportional share allocation | Share deviation calculation | Score = max(0, 100 - total_deviation) |
-| **109(b)** | Compact parcel allocation | Polsby-Popper: `4πA/P²` | Normalized 0-100 |
-| **109(c)** | Balanced land quality | Gini coefficient across allotments | Variance < 20% = pass |
-| **109(d)** | Preserve existing fields | Field split count ratio | (unsplit/total) × 100 |
-| **109(e)** | Preserve existing possession | Possession overlap percentage | Weighted by possession area |
-| **109(f)** | Fair commercial value | Frontage % vs share % deviation | max(0, 100 - deviation×2) |
-| **109(g)** | Respect family settlements | Settlement boundary overlap | Proportional overlap score |
+### 💾 Local Data Storage
+- PostgreSQL + PostGIS for spatial data
+- Parcel geometry stored as GeoJSON/PostGIS
+- Document metadata with file paths
+- Complete audit trail for all actions
 
 ---
 
 ## 🏗️ System Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                   🌐 Frontend (Next.js 15)                        │
-│   TypeScript · TailwindCSS · ShadCN · Leaflet · MapLibre         │
-├──────────────────────────────────────────────────────────────────┤
-│                         🔄 Nginx Proxy                            │
-├──────────────────────────────────────────────────────────────────┤
-│                   ⚙️ Backend (FastAPI/Python 3.12)                │
-│                                                                  │
-│  ┌──────────┐  ┌──────────────┐  ┌──────────┐  ┌─────────────┐  │
-│  │GIS Engine │  │  Partition   │  │ Rule 109 │  │     AI      │  │
-│  │GeoPandas  │  │   Engine     │  │  Engine  │  │ Explanation │  │
-│  │ Shapely   │  │   Voronoi    │  │Scoring   │  │  Reasoning  │  │
-│  └──────────┘  └──────────────┘  └──────────┘  └─────────────┘  │
-│                                                                  │
-│  ┌────────────┐  ┌────────────────┐  ┌────────────────────────┐ │
-│  │  Reports   │  │   BhuNaksha    │  │     Auth & RBAC       │ │
-│  │  Kurra/    │  │   Adapter +    │  │     JWT + Roles       │ │
-│  │  Decrees   │  │   Playwright   │  │                        │ │
-│  └────────────┘  └────────────────┘  └────────────────────────┘ │
-├──────────────────────────────────────────────────────────────────┤
-│                    🗄️ PostgreSQL + PostGIS 3.4                   │
-│              (Spatial Queries · Geometry Indexes)                 │
-├──────────────────────────────────────────────────────────────────┤
-│                   🌍 BhuNaksha Integration Layer                  │
-│   Bihar · Uttar Pradesh · Madhya Pradesh · Rajasthan             │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                    🌐 Frontend (Next.js 15 + TypeScript)              │
+│                                                                      │
+│  ┌─────────────┐  ┌──────────────┐  ┌─────────────┐  ┌───────────┐  │
+│  │  GovHeader   │  │  SearchForm  │  │   MapViewer │  │Documents  │  │
+│  │  (Official)  │  │ (District/   │  │ (Leaflet +  │  │  List &   │  │
+│  │              │  │  Circle/     │  │  Satellite) │  │ Download  │  │
+│  │              │  │  Mouza/Plot) │  │             │  │           │  │
+│  └─────────────┘  └──────────────┘  └─────────────┘  └───────────┘  │
+├──────────────────────────────────────────────────────────────────────┤
+│                         🔄 Nginx Proxy                               │
+├──────────────────────────────────────────────────────────────────────┤
+│                    ⚙️ Backend (FastAPI + Python 3.12)                 │
+│                                                                      │
+│  ┌─────────────┐  ┌──────────────────┐  ┌────────────────────────┐  │
+│  │  Auth API   │  │  Parcel Search   │  │   Document Service     │  │
+│  │  JWT + RBAC │  │  & Retrieval     │  │   Download & Store     │  │
+│  └─────────────┘  └──────────────────┘  └────────────────────────┘  │
+│                                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐     │
+│  │              BhuNaksha Integration Layer                      │     │
+│  │  ┌─────────────────┐  ┌──────────────────┐                    │     │
+│  │  │   API Adapter    │  │ Playwright       │                    │     │
+│  │  │ (Direct GIS API) │  │ (Browser Scraper)│                    │     │
+│  │  └─────────────────┘  └──────────────────┘                    │     │
+│  └─────────────────────────────────────────────────────────────┘     │
+├──────────────────────────────────────────────────────────────────────┤
+│                    🗄️ PostgreSQL + PostGIS 3.4                       │
+│            (Spatial Queries · Geometry Indexes · GeoJSON)             │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -177,13 +132,9 @@ PDF · GeoJSON · KML · Shapefile · CSV · JSON
 | FastAPI | 0.115 | REST API framework |
 | SQLAlchemy | 2.0 | ORM |
 | GeoAlchemy2 | 0.15 | PostGIS ORM integration |
-| GeoPandas | 1.0 | Spatial DataFrame operations |
-| Shapely | 2.0 | Geometry operations |
-| PyProj | 3.6 | Coordinate transformations |
-| GDAL | 3.8 | Raster/vector processing |
+| Playwright | 1.47 | Browser automation for BhuNaksha |
+| httpx | 0.27 | Async HTTP client |
 | Alembic | 1.13 | Database migrations |
-| Celery | 5.4 | Async task queue |
-| Redis | 5.1 | Caching + message broker |
 
 ### Frontend
 | Technology | Version | Purpose |
@@ -191,13 +142,10 @@ PDF · GeoJSON · KML · Shapefile · CSV · JSON
 | Next.js | 15 | React framework |
 | TypeScript | 5.5 | Type safety |
 | TailwindCSS | 3.4 | Utility-first CSS |
-| ShadCN | Latest | Component library |
 | Leaflet | 1.9 | Interactive maps |
-| MapLibre GL | 4.5 | Vector tile maps |
+| React Leaflet | 4.2 | React map components |
 | React Query | 5.56 | Server state management |
 | Zustand | 4.5 | Client state management |
-| Recharts | 2.12 | Data visualization |
-| React Hook Form | 7.53 | Form handling |
 
 ### Infrastructure
 | Technology | Version | Purpose |
@@ -207,7 +155,6 @@ PDF · GeoJSON · KML · Shapefile · CSV · JSON
 | Docker | 24+ | Containerization |
 | Docker Compose | 2.20+ | Orchestration |
 | Nginx | Latest | Reverse proxy |
-| GitHub Actions | - | CI/CD |
 
 ---
 
@@ -218,147 +165,135 @@ land_partitioner/
 ├── backend/
 │   ├── app/
 │   │   ├── __init__.py
-│   │   ├── main.py                          # FastAPI application entry point
+│   │   ├── main.py                     # FastAPI application entry point
 │   │   ├── api/
 │   │   │   └── v1/
 │   │   │       ├── __init__.py
-│   │   │       ├── router.py                # Route aggregation
-│   │   │       ├── auth.py                  # Login, register, profile
-│   │   │       ├── parcels.py               # Parcel CRUD + GIS
-│   │   │       ├── partition.py             # Partition generation
-│   │   │       ├── reports.py               # Report endpoints
-│   │   │       ├── admin.py                 # Admin operations
-│   │   │       └── README.md
+│   │   │       ├── router.py           # Route aggregation
+│   │   │       ├── auth.py             # Login, register, profile
+│   │   │       ├── parcels.py          # Parcel search & retrieval
+│   │   │       └── documents.py        # Document download & fetch
 │   │   ├── core/
-│   │   │   ├── config.py                    # Settings management
-│   │   │   ├── security.py                  # JWT + password hashing
-│   │   │   └── deps.py                      # FastAPI dependencies
+│   │   │   ├── config.py               # Application settings
+│   │   │   ├── security.py             # JWT + password hashing
+│   │   │   └── deps.py                 # FastAPI dependencies
 │   │   ├── db/
-│   │   │   ├── base.py                      # Declarative base + mixins
-│   │   │   ├── session.py                   # Async session factory
-│   │   │   └── README.md
+│   │   │   ├── base.py                 # Declarative base + mixins
+│   │   │   └── session.py              # Async session factory
 │   │   ├── models/
-│   │   │   ├── user.py                      # Users with RBAC
-│   │   │   ├── parcel.py                    # Parcels with PostGIS
-│   │   │   ├── owner.py                     # Co-tenure holders
-│   │   │   ├── partition.py                 # Partition plans
-│   │   │   ├── partition_parcel.py          # Allotments
-│   │   │   ├── score.py                     # Scoring metrics
-│   │   │   ├── kurra.py                     # Kurra reports
-│   │   │   ├── decree.py                    # Legal decrees
-│   │   │   └── audit.py                     # Audit trails
+│   │   │   ├── user.py                 # Users with RBAC
+│   │   │   ├── parcel.py               # Parcels with PostGIS
+│   │   │   ├── document.py             # Parcel documents
+│   │   │   └── audit.py                # Audit trails
 │   │   ├── schemas/
-│   │   │   ├── auth.py                      # Login/Register/Token
-│   │   │   ├── parcel.py                    # Parcel input/output
-│   │   │   ├── owner.py                     # Owner management
-│   │   │   ├── partition.py                 # Partition operations
-│   │   │   ├── score.py                     # Score schemas
-│   │   │   ├── kurra.py                     # Report schemas
-│   │   │   └── decree.py                    # Decree schemas
+│   │   │   ├── auth.py                 # Auth schemas
+│   │   │   ├── parcel.py               # Parcel schemas
+│   │   │   └── document.py             # Document schemas
 │   │   └── services/
-│   │       ├── gis/
-│   │       │   ├── geometry_engine.py       # Core GIS operations
-│   │       │   ├── spatial_analyzer.py      # Advanced spatial analysis
-│   │       │   └── README.md
-│   │       ├── partition/
-│   │       │   ├── partition_engine.py      # Main engine
-│   │       │   ├── compactness.py           # Polsby-Popper optimization
-│   │       │   ├── voronoi.py               # Weighted Voronoi
-│   │       │   ├── optimization.py          # Multi-objective
-│   │       │   └── README.md
-│   │       ├── legal/
-│   │       │   ├── rule109_engine.py        # 7-clause checker
-│   │       │   ├── compliance_checker.py    # Compliance reports
-│   │       │   ├── scoring_engine.py        # Weighted scoring
-│   │       │   └── README.md
-│   │       ├── ai/
-│   │       │   ├── recommendation_engine.py # Plan ranking
-│   │       │   ├── explanation_engine.py    # Human-readable explanations
-│   │       │   ├── knowledge_base.py        # Legal knowledge
-│   │       │   └── README.md
-│   │       ├── reports/
-│   │       │   ├── kurra_report.py          # Kurra generation
-│   │       │   ├── decree_report.py         # Decree generation
-│   │       │   ├── report_generator.py      # Multi-format export
-│   │       │   └── README.md
 │   │       └── bhunaksha/
-│   │           ├── adapter.py               # BhuNaksha API
-│   │           ├── playwright_adapter.py    # Browser fallback
-│   │           ├── models.py                # Data models
-│   │           └── README.md
-│   ├── alembic/                             # DB migrations
+│   │           ├── adapter.py          # BhuNaksha API adapter
+│   │           ├── playwright_adapter.py # Browser automation
+│   │           └── models.py           # BhuNaksha data models
 │   ├── scripts/
-│   │   ├── seed.py                          # Sample data seeder
-│   │   └── init-db.sql                      # DB initialization
+│   │   ├── seed.py                     # Sample data seeder
+│   │   └── init-db.sql                 # DB initialization
 │   ├── tests/
 │   │   ├── test_auth.py
 │   │   ├── test_parcels.py
-│   │   ├── test_partition.py
-│   │   ├── test_gis.py
-│   │   ├── test_legal.py
+│   │   ├── test_bhunaksha.py
 │   │   └── conftest.py
-│   ├── data/sample/
-│   │   └── sample_parcel.geojson           # Sample dataset
+│   ├── uploads/documents/              # Downloaded documents
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── layout.tsx                   # Root layout
-│   │   │   ├── page.tsx                     # Landing page
-│   │   │   ├── providers.tsx                # React Query providers
-│   │   │   ├── globals.css                  # Global styles
+│   │   │   ├── layout.tsx              # Root layout
+│   │   │   ├── page.tsx                # Landing page
+│   │   │   ├── providers.tsx           # React Query provider
+│   │   │   ├── globals.css             # Government styles
 │   │   │   ├── (auth)/login/page.tsx
 │   │   │   ├── (auth)/register/page.tsx
 │   │   │   └── (dashboard)/
 │   │   │       ├── dashboard/page.tsx
-│   │   │       ├── parcels/page.tsx
+│   │   │       ├── search/page.tsx
 │   │   │       ├── parcels/[id]/page.tsx
-│   │   │       ├── owners/page.tsx
-│   │   │       ├── partition/page.tsx
-│   │   │       ├── partition/[id]/page.tsx
-│   │   │       ├── plans/page.tsx
-│   │   │       ├── plans/[id]/page.tsx
-│   │   │       ├── kurra/page.tsx
-│   │   │       ├── decree/page.tsx
-│   │   │       ├── reports/page.tsx
-│   │   │       └── admin/page.tsx
+│   │   │       ├── gis-viewer/page.tsx
+│   │   │       ├── documents/page.tsx
+│   │   │       ├── help/page.tsx
+│   │   │       └── contact/page.tsx
 │   │   ├── components/
-│   │   │   ├── ui/                          # ShadCN components
-│   │   │   ├── map/                         # Leaflet map components
-│   │   │   ├── forms/                       # Form components
-│   │   │   ├── layout/                      # Layout components
-│   │   │   ├── charts/                      # Recharts components
-│   │   │   ├── plans/                       # Plan display
-│   │   │   ├── ai/                          # AI explanations
-│   │   │   └── scoring/                     # Score display
-│   │   ├── lib/                             # API client, utilities
-│   │   ├── hooks/                           # React Query hooks
-│   │   ├── store/                           # Zustand stores
-│   │   └── types/                           # TypeScript types
-│   ├── tests/
+│   │   │   ├── layout/                 # GovHeader, GovFooter
+│   │   │   ├── map/                    # MapContainer, ParcelMap
+│   │   │   ├── forms/                  # ParcelSearchForm
+│   │   │   └── ui/                     # Button, Card, Input, etc.
+│   │   ├── lib/                        # API client, constants
+│   │   ├── hooks/                      # React Query hooks
+│   │   ├── store/                      # Zustand stores
+│   │   ├── types/                      # TypeScript types
+│   │   └── utils/                      # Helper functions
+│   ├── public/
 │   ├── package.json
 │   ├── tailwind.config.ts
 │   ├── tsconfig.json
 │   ├── next.config.js
 │   └── Dockerfile
 ├── docker/
-│   ├── nginx.conf                           # Reverse proxy config
-│   └── README.md
-├── docker-compose.yml                       # Multi-service orchestration
-├── .env.example                             # Environment template
+│   └── nginx.conf                      # Reverse proxy config
+├── docker-compose.yml                  # Multi-service orchestration
+├── .env.example                        # Environment template
 ├── .gitignore
 └── README.md
 ```
 
 ---
 
+## 👤 User Workflow
+
+```
+┌──────────┐     ┌──────────┐     ┌──────────────┐     ┌───────────┐
+│  Open    │────▶│  Enter   │────▶│   System      │────▶│  View     │
+│ GeoKurra │     │ District │     │  Retrieves    │     │  Parcel   │
+│          │     │ Circle   │     │  ✓ Plot Info  │     │  on Map   │
+│          │     │ Mouza    │     │  ✓ Geometry   │     │           │
+│          │     │ Plot No  │     │  ✓ PNIU       │     │           │
+│          │     │          │     │  ✓ Area       │     │           │
+└──────────┘     └──────────┘     └──────────────┘     └───────────┘
+                                                              │
+                                                              ▼
+                                                    ┌─────────────────┐
+                                                    │  Download       │
+                                                    │  Documents      │
+                                                    │  ✓ Parcel PDF   │
+                                                    │  ✓ Land Record  │
+                                                    │  ✓ GeoJSON      │
+                                                    └─────────────────┘
+```
+
+### Step-by-Step Process
+
+1. **User opens** GeoKurla portal
+2. **User logs in** with credentials (or registers as Citizen)
+3. **User navigates** to Parcel Search
+4. **User enters**: District → Circle → Mouza → Plot Number
+5. **System searches** BhuNaksha and retrieves:
+   - Plot information (Khata, Area, Land Type)
+   - Parcel geometry (Polygon coordinates)
+   - PNIU (Permanent parcel identifier)
+   - Available documents (PDFs, records)
+6. **System displays** parcel on satellite map with boundary overlay
+7. **User can**:
+   - View detailed parcel information
+   - View parcel on interactive satellite map
+   - Download Parcel PDF, Land Record, GeoJSON
+
+---
+
 ## 🚀 Quick Start (Docker)
 
 ### Prerequisites
-- [Docker Engine](https://docs.docker.com/engine/install/) 24+
-- [Docker Compose](https://docs.docker.com/compose/install/) 2.20+
-- 4GB RAM minimum (8GB recommended)
+- Docker Engine 24+
+- Docker Compose 2.20+
 
 ### Step 1: Clone and Configure
 
@@ -369,7 +304,7 @@ cd land_partitioner
 # Copy environment configuration
 cp .env.example .env
 
-# (Optional) Edit .env with your settings
+# Edit .env if needed (default values work for local development)
 ```
 
 ### Step 2: Start All Services
@@ -378,20 +313,17 @@ cp .env.example .env
 docker-compose up -d
 ```
 
-This starts 6 services:
 | Service | Port | Description |
 |---------|------|-------------|
-| `postgis` | 5432 | PostgreSQL + PostGIS database |
-| `redis` | 6379 | Cache and message broker |
+| `postgis` | 5432 | PostgreSQL + PostGIS |
 | `backend` | 8000 | FastAPI application |
 | `frontend` | 3000 | Next.js application |
 | `nginx` | 80/443 | Reverse proxy |
-| `celery-worker` | - | Async task processing |
 
-### Step 3: Initialize Database
+### Step 3: Initialize Database & Seed Data
 
 ```bash
-# Run database migrations
+# Run migrations
 docker-compose exec backend alembic upgrade head
 
 # Seed sample data
@@ -404,29 +336,22 @@ docker-compose exec backend python scripts/seed.py
 |---------|-----|
 | **Frontend** | [http://localhost:3000](http://localhost:3000) |
 | **Backend API** | [http://localhost:8000](http://localhost:8000) |
-| **API Docs (Swagger)** | [http://localhost:8000/docs](http://localhost:8000/docs) |
-| **API Docs (ReDoc)** | [http://localhost:8000/redoc](http://localhost:8000/redoc) |
+| **Swagger Docs** | [http://localhost:8000/docs](http://localhost:8000/docs) |
 | **Health Check** | [http://localhost:8000/health](http://localhost:8000/health) |
 
-### Step 5: Login with Default Credentials
+### Login Credentials
 
-After seeding:
-- **Username**: `admin`
-- **Password**: `admin123`
-- **Role**: Admin (full access)
+| Username | Password | Role |
+|----------|----------|------|
+| `admin` | `admin123` | Admin |
+| `officer` | `officer123` | Officer |
+| `citizen` | `citizen123` | Citizen |
 
 ---
 
 ## 🔧 Manual Setup
 
 ### Backend Setup
-
-#### Prerequisites
-- Python 3.12+
-- PostgreSQL 16 with PostGIS 3.4
-- Redis 7+
-
-#### Installation
 
 ```bash
 cd backend
@@ -443,44 +368,30 @@ venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Install Playwright browsers (for BhuNaksha scraping)
+playwright install chromium
+
 # Configure environment
 copy ..\.env.example .env
-# Edit .env with your PostgreSQL connection string
+# Edit .env with your PostgreSQL connection
 
 # Run migrations
 alembic upgrade head
 
-# Seed sample data
+# Seed data
 python scripts/seed.py
 
-# Start development server
+# Start server
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-#### Run Tests
-
-```bash
-cd backend
-pytest tests/ -v --cov=app
-```
-
 ### Frontend Setup
-
-#### Prerequisites
-- Node.js 18+
-- npm 9+
-
-#### Installation
 
 ```bash
 cd frontend
 
 # Install dependencies
 npm install
-
-# Configure API URL
-copy ..\.env.example .env.local
-# Edit NEXT_PUBLIC_API_URL if needed (default: http://localhost:8000/api/v1)
 
 # Start development server
 npm run dev
@@ -491,20 +402,11 @@ npm run build
 npm start
 ```
 
-#### Run Tests
-
-```bash
-cd frontend
-npm test
-```
-
 ---
 
 ## 📖 API Documentation
 
-Once running, explore the interactive API docs:
-- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+Once running, visit: [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI)
 
 ### Authentication Endpoints
 
@@ -514,55 +416,26 @@ Once running, explore the interactive API docs:
 | POST | `/api/v1/auth/register` | Register new user | ❌ |
 | GET | `/api/v1/auth/me` | Current user profile | ✅ |
 | PUT | `/api/v1/auth/me` | Update profile | ✅ |
-| POST | `/api/v1/auth/refresh` | Refresh JWT token | ✅ |
 
 ### Parcel Endpoints
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/v1/parcels` | List parcels (paginated) | ✅ |
-| POST | `/api/v1/parcels` | Create parcel | ✅ |
-| GET | `/api/v1/parcels/{id}` | Parcel details | ✅ |
-| PUT | `/api/v1/parcels/{id}` | Update parcel | ✅ |
+| POST | `/api/v1/parcels/search` | Search parcel from BhuNaksha | ✅ |
+| GET | `/api/v1/parcels` | List stored parcels | ✅ |
+| GET | `/api/v1/parcels/{id}` | Get parcel detail | ✅ |
+| GET | `/api/v1/parcels/{id}/geometry` | Get parcel GeoJSON geometry | ✅ |
+| GET | `/api/v1/parcels/{id}/map` | Get map data (center + zoom) | ✅ |
 | DELETE | `/api/v1/parcels/{id}` | Delete parcel | Admin |
-| GET | `/api/v1/parcels/{id}/geometry` | Parcel geometry (GeoJSON) | ✅ |
-| POST | `/api/v1/parcels/{id}/owners` | Add owners | ✅ |
-| GET | `/api/v1/parcels/{id}/owners` | List owners | ✅ |
-| POST | `/api/v1/parcels/upload` | Upload GIS file | ✅ |
-| POST | `/api/v1/parcels/bhunaksha/fetch` | Fetch from BhuNaksha | ✅ |
 
-### Partition Endpoints
+### Document Endpoints
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/api/v1/partition/generate` | Generate all 3 plans | ✅ |
-| GET | `/api/v1/partition/plans` | List plans | ✅ |
-| GET | `/api/v1/partition/plans/{id}` | Plan detail + scores | ✅ |
-| GET | `/api/v1/partition/plans/{id}/comparison` | Compare all plans | ✅ |
-| GET | `/api/v1/partition/plans/{id}/allotments` | List allotments | ✅ |
-| GET | `/api/v1/partition/plans/{id}/allotments/{aid}/explain` | AI explanation | ✅ |
-| POST | `/api/v1/partition/plans/{id}/approve` | Approve plan | Revenue Officer |
-| POST | `/api/v1/partition/plans/{id}/reject` | Reject plan | Revenue Officer |
-| GET | `/api/v1/partition/recommendations` | AI recommendations | ✅ |
-
-### Report Endpoints
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/v1/reports/kurra/{plan_id}` | Generate Kurra report | ✅ |
-| POST | `/api/v1/reports/preliminary-decree/{plan_id}` | Preliminary decree | ✅ |
-| POST | `/api/v1/reports/final-decree/{plan_id}` | Final decree | ✅ |
-| GET | `/api/v1/reports/{id}/download` | Download PDF | ✅ |
-| POST | `/api/v1/reports/export/{plan_id}` | Export in format | ✅ |
-
-### Admin Endpoints
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/v1/admin/users` | List all users | Admin |
-| PUT | `/api/v1/admin/users/{id}/role` | Change role | Admin |
-| GET | `/api/v1/admin/audit-logs` | View audit trail | Admin |
-| GET | `/api/v1/admin/stats` | System stats | Admin |
+| GET | `/api/v1/parcels/{id}/documents` | List available documents | ✅ |
+| POST | `/api/v1/parcels/{id}/documents/fetch` | Fetch documents from BhuNaksha | ✅ |
+| POST | `/api/v1/parcels/{id}/documents/download/{doc_id}` | Trigger document download | ✅ |
+| GET | `/api/v1/documents/{id}/download` | Download document file | ✅ |
 
 ---
 
@@ -571,139 +444,242 @@ Once running, explore the interactive API docs:
 ### Entity Relationship
 
 ```
-┌─────────┐     ┌──────────┐     ┌───────────────┐
-│  users  │────▶│  parcels │────▶│    owners     │
-└─────────┘     └──────────┘     └───────────────┘
-                      │                  │
-                      ▼                  ▼
-              ┌──────────────┐  ┌────────────────┐
-              │partition_    │  │  partition_    │
-              │   plans      │──│   parcels      │
-              └──────────────┘  └────────────────┘
-                      │
-                      ▼
-              ┌──────────────┐
-              │   scores     │
-              └──────────────┘
-                      │
-          ┌───────────┴───────────┐
-          ▼                       ▼
-  ┌──────────────┐       ┌──────────────┐
-  │kurra_reports │       │   decrees    │
-  └──────────────┘       └──────────────┘
+┌─────────┐       ┌──────────┐       ┌──────────────┐
+│  users  │       │  parcels │──────▶│  documents   │
+└─────────┘       └──────────┘       └──────────────┘
+                        │
+                        │ (PostGIS Geometry)
+                        ▼
+                ┌──────────────┐
+                │  parcel_     │
+                │  geometry    │
+                │ (implicit in  │
+                │  parcels     │
+                │  table)      │
+                └──────────────┘
 
-  ┌────────────────────────────────────┐
-  │           audit_logs               │
-  └────────────────────────────────────┘
+┌────────────────────────────────────┐
+│           audit_logs               │
+└────────────────────────────────────┘
 ```
 
 ### Core Tables
 
-| Table | Description | Key Columns |
-|-------|-------------|-------------|
-| `users` | User accounts with RBAC | id, email, username, role (enum) |
-| `parcels` | Land parcels with geometry | id, pniu, village, tehsil, district, **geometry (PostGIS)**, total_area |
-| `owners` | Co-tenure holders | id, parcel_id, owner_name, share_percentage, possession_geometry |
-| `partition_plans` | Generated partition plans | id, parcel_id, plan_type (enum: compactness/possession/commercial), status |
-| `partition_parcels` | Allotted sub-parcels | id, plan_id, owner_id, allocated_area, **allocated_geometry**, scores |
-| `scores` | Plan scoring metrics | id, plan_id, share_compliance, compactness, road_frontage, overall_score |
-| `kurra_reports` | Generated Kurra reports | id, plan_id, report_data (JSON), pdf_path |
-| `decrees` | Legal decrees | id, plan_id, decree_type (preliminary/final), decree_data (JSON) |
-| `audit_logs` | Complete audit trail | id, user_id, action, entity_type, old_values, new_values |
+#### `users`
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| email | VARCHAR(255) | Unique email |
+| username | VARCHAR(100) | Unique username |
+| hashed_password | VARCHAR(255) | bcrypt hash |
+| full_name | VARCHAR(255) | Display name |
+| phone | VARCHAR(20) | Contact |
+| role | ENUM(admin/officer/citizen) | User role |
+| is_active | BOOLEAN | Account active |
+| created_at | TIMESTAMP | Auto |
+| updated_at | TIMESTAMP | Auto |
 
-### PostGIS Spatial Columns
+#### `parcels`
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| pniu | VARCHAR(100) | **Permanent parcel identifier** |
+| plot_number | VARCHAR(50) | Plot number |
+| khata_number | VARCHAR(50) | Khata number |
+| survey_number | VARCHAR(50) | Survey number |
+| village | VARCHAR(150) | Village name |
+| mouza | VARCHAR(150) | Mouza/pargana |
+| circle | VARCHAR(100) | Circle |
+| district | VARCHAR(100) | District |
+| state | VARCHAR(100) | State (default: Bihar) |
+| total_area | FLOAT | Area |
+| area_unit | VARCHAR(20) | Unit (acre/hectare/sq.m) |
+| land_type | VARCHAR(50) | Land classification |
+| geometry | GEOMETRY(Polygon, 4326) | **PostGIS geometry** |
+| boundary_length | FLOAT | Perimeter |
+| vertices | JSON | Vertex coordinates |
+| source | ENUM(bhunaksha/manual) | Data source |
+| created_at | TIMESTAMP | Auto |
+| updated_at | TIMESTAMP | Auto |
 
-| Table | Geometry Column | SRID | Type |
-|-------|----------------|------|------|
-| `parcels` | `geometry` | 4326 | Polygon |
-| `owners` | `possession_geometry` | 4326 | Polygon |
-| `partition_parcels` | `allocated_geometry` | 4326 | Polygon |
-| `roads` | `geometry` | 4326 | LineString |
-| `commercial_zones` | `geometry` | 4326 | Polygon |
-| `settlements` | `geometry` | 4326 | Polygon |
+#### `documents`
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| parcel_id | UUID | FK to parcels |
+| document_type | ENUM | parcel_pdf/land_record/ror/geojson/other |
+| file_name | VARCHAR(255) | Original filename |
+| file_path | VARCHAR(500) | Server path |
+| file_size | BIGINT | Size in bytes |
+| mime_type | VARCHAR(100) | MIME type |
+| source_url | VARCHAR(500) | Original BhuNaksha URL |
+| is_downloaded | BOOLEAN | Download status |
+| created_at | TIMESTAMP | Auto |
+
+#### `audit_logs`
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| user_id | UUID | FK to users (nullable) |
+| action | VARCHAR(100) | Action performed |
+| entity_type | VARCHAR(50) | Entity type |
+| entity_id | UUID | Entity identifier |
+| details | JSON | Action details |
+| ip_address | VARCHAR(45) | Client IP |
+| timestamp | TIMESTAMP | Auto |
 
 ---
 
-## 📊 Scoring System
+## 🌐 BhuNaksha Integration
 
-Each partition plan is scored across 7 metrics (0-100), then combined into an overall score using configurable weights.
+### Architecture
 
-### Default Weights
-
-```python
-overall_score = (
-    0.30 × compactness +          # Rule 109(b) - highest priority
-    0.20 × share_compliance +     # Rule 109(a) - fundamental requirement
-    0.15 × road_frontage +        # Rule 109(f) - commercial value
-    0.15 × commercial_fairness +  # Rule 109(f) - balanced distribution
-    0.10 × possession_preservation +  # Rule 109(e) - practical reality
-    0.05 × field_preservation +   # Rule 109(d) - minimize disruption
-    0.05 × family_settlement      # Rule 109(g) - mutual agreements
-)
+```
+┌──────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  User Input  │────▶│  BhuNakshaAdapter │────▶│  Response with  │
+│  District    │     │                   │     │  ✓ PNIU         │
+│  Circle      │     │  Method 1:        │     │  ✓ Geometry     │
+│  Mouza       │     │  Direct GIS API   │     │  ✓ Area         │
+│  Plot No     │     │                   │     │  ✓ Documents    │
+│              │     │  Method 2:        │     │                 │
+│              │     │  Playwright       │     │                 │
+│              │     │  Scraper          │     │                 │
+│              │     │                   │     │                 │
+│              │     │  Method 3:        │     │                 │
+│              │     │  Fallback:        │     │                 │
+│              │     │  Simulated Data   │     │                 │
+└──────────────┘     └──────────────────┘     └─────────────────┘
 ```
 
-### Metric Calculations
+### Integration Methods
 
-| Metric | Formula | Range |
-|--------|---------|-------|
-| **Compactness** | `Polsby-Popper = 4π × Area / Perimeter²` | 0-100 |
-| **Share Compliance** | `max(0, 100 - Σ|actual_share - target_share|)` | 0-100 |
-| **Road Frontage** | `max(0, 100 - Σ|frontage_% - share_%| × 2)` | 0-100 |
-| **Commercial Fairness** | Gini coefficient inversion | 0-100 |
-| **Possession** | Overlap ratio × 100 | 0-100 |
-| **Field Preservation** | (Unsplit fields / Total fields) × 100 | 0-100 |
-| **Settlement** | Settlement overlap × 100 | 0-100 |
+#### Method 1: Direct GIS API
+Attempts to call BhuNaksha GIS endpoints:
+- `getPlotAtXY` - Retrieve plot by coordinates
+- `getPointsFromPNIU` - Get vertices from PNIU
+- `ScalarDataHandler` - Get plot attributes
+- `WMS Services` - Web Map Service tiles
+
+#### Method 2: Playwright Browser Automation
+If direct APIs fail, uses Playwright to:
+1. Open BhuNaksha portal
+2. Select District → Circle → Mouza
+3. Search Plot Number
+4. Extract geometry and details from page
+5. Download available documents
+
+#### Method 3: Simulated Data (Development)
+During development/demo, the adapter returns realistic Bihar cadastral data with:
+- Proper PNIU format: `DDDDCCCCMMMMMMPPPPP`
+- Realistic Bihar coordinates (lat: 24.5-27.5, lng: 83.5-88.0)
+- Randomized but realistic plot shapes and areas
+
+### PNIU Format
+
+The **Permanent Parcel Identifier (PNIU)** is formatted as:
+
+```
+DDDD CCCC MMMMMM PPPPP
+│    │    │      │
+│    │    │      └── Plot Number (5 digits)
+│    │    └───────── Mouza Code (6 digits)
+│    └────────────── Circle Code (4 digits)
+└─────────────────── District Code (4 digits)
+```
+
+Example: `0224 0012 003456 00123`
 
 ---
 
-## 📚 Module Documentation
+## 🗺️ GIS Map Viewer
 
-Each module has its own README with detailed implementation notes and usage examples:
+### Features
 
-| Module | File | Key Contents |
-|--------|------|--------------|
-| **Backend Core** | [backend/README.md](backend/README.md) | Config, security, database setup |
-| **GIS Engine** | [backend/app/services/gis/README.md](backend/app/services/gis/README.md) | Spatial analysis, geometries, Voronoi |
-| **Partition Engine** | [backend/app/services/partition/README.md](backend/app/services/partition/README.md) | Algorithms, optimization, compactness |
-| **Rule 109 Engine** | [backend/app/services/legal/README.md](backend/app/services/legal/README.md) | Compliance, scoring, legal checks |
-| **AI Engine** | [backend/app/services/ai/README.md](backend/app/services/ai/README.md) | Rankings, explanations, knowledge base |
-| **Report Engine** | [backend/app/services/reports/README.md](backend/app/services/reports/README.md) | Kurra, decrees, multi-format export |
-| **BhuNaksha** | [backend/app/services/bhunaksha/README.md](backend/app/services/bhunaksha/README.md) | API adapters, state portals |
-| **API Layer** | [backend/app/api/v1/README.md](backend/app/api/v1/README.md) | All endpoints with examples |
-| **Database** | [backend/app/db/README.md](backend/app/db/README.md) | Schema, migrations, spatial indexes |
-| **Frontend** | [frontend/README.md](frontend/README.md) | Components, pages, state management |
-| **DevOps** | [docker/README.md](docker/README.md) | Deployment, Docker, Nginx config |
+- **Base Layers**: Satellite imagery, OpenStreetMap, Hybrid
+- **Parcel Overlay**: Highlighted polygon boundary
+- **Controls**: Zoom, pan, fullscreen, coordinates
+- **Info Display**: Parcel details on click
+- **Layer Toggle**: Switch between map styles
+
+### Implementation
+
+The map viewer uses **Leaflet** with:
+- `L.tileLayer` for base imagery
+- `L.geoJSON` for parcel boundary overlay
+- Custom styled polygons with dashed borders
+- Popup info on parcel click
+- Fullscreen control plugin
+
+### Map Layers
+
+| Layer | Type | Source |
+|-------|------|--------|
+| Satellite | Tile | Google Satellite / Esri |
+| Street | Tile | OpenStreetMap |
+| Hybrid | Tile | Google Hybrid |
+| Parcel Boundary | Vector | PostGIS → GeoJSON |
+
+---
+
+## 📄 Document Management
+
+### Document Types
+
+| Type | Description | Format |
+|------|-------------|--------|
+| Parcel PDF | Plot map with boundaries | PDF |
+| Land Record | Khata/ROR details | PDF |
+| GeoJSON | Parcel geometry data | JSON |
+| Other | Additional records | PDF |
+
+### Download Flow
+
+1. System discovers available documents for a parcel
+2. User clicks "Download" for desired document
+3. System downloads from BhuNaksha (or serves cached)
+4. File is stored in `uploads/documents/`
+5. Document metadata saved to database
+6. User receives download via browser
+
+---
+
+## 🔒 Security
+
+### Authentication
+- JWT-based token authentication
+- Token expiry: 60 minutes (configurable)
+- Passwords hashed with bcrypt
+
+### Authorization (RBAC)
+| Role | Permissions |
+|------|-------------|
+| **Admin** | Full access, manage users, view audit logs |
+| **Officer** | Search parcels, view maps, download documents |
+| **Citizen** | Search parcels, view own searches, download documents |
+
+### Additional Security
+- CORS whitelist configuration
+- Input validation via Pydantic
+- SQL injection prevention (SQLAlchemy ORM)
+- Audit trails for all operations
+- HTTPS support via Nginx
 
 ---
 
 ## 🧪 Testing
 
-### Backend Tests (40+ tests)
+### Backend Tests
 
 ```bash
 cd backend
-
-# Run all tests with coverage
 pytest tests/ -v --cov=app
-
-# Run specific test file
-pytest tests/test_gis.py -v
-pytest tests/test_legal.py -v
-pytest tests/test_partition.py -v
-
-# Run with verbose output
-pytest tests/ -v --tb=long
 ```
-
-### Test Coverage
 
 | Test File | Tests | Focus |
 |-----------|-------|-------|
-| `test_auth.py` | 6 | JWT, login, register, roles |
-| `test_parcels.py` | 4 | CRUD, geometry, search |
-| `test_partition.py` | 3 | Plan generation, allocation |
-| `test_gis.py` | 20 | Area, perimeter, compactness, Voronoi |
-| `test_legal.py` | 14 | Rule 109 a-g, scoring engine |
+| `test_auth.py` | 6 | Login, register, token verification |
+| `test_parcels.py` | 4 | Search, retrieve, geometry, map data |
+| `test_bhunaksha.py` | 5 | Adapter simulation, PNIU, geometry generation |
 
 ### Frontend Tests
 
@@ -716,28 +692,19 @@ npm test
 
 ## 🚢 Deployment
 
-### Production Docker Deployment
+### Production Deployment
 
 ```bash
-# Clone on server
-git clone https://github.com/karthiksteve/land_partitioner.git
-cd land_partitioner
-
-# Configure for production
-cp .env.example .env
-# Edit: SECRET_KEY, DATABASE_URL, CORS_ORIGINS
-
-# Generate SSL certificates (or use Let's Encrypt)
-# Place in docker/ssl/
-
-# Build and start
+# Build and start all services
 docker-compose -f docker-compose.yml up -d --build
 
-# Initialize
+# Initialize database
 docker-compose exec backend alembic upgrade head
+
+# Load seed data
 docker-compose exec backend python scripts/seed.py
 
-# Monitor
+# Monitor services
 docker-compose logs -f --tail=100
 ```
 
@@ -753,75 +720,26 @@ cat backup.sql | docker-compose exec -T postgis psql -U geokurra geokurra
 
 ### Environment Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `SECRET_KEY` | ✅ | - | JWT signing secret |
-| `DATABASE_URL` | ✅ | postgresql+asyncpg://... | PostgreSQL connection |
-| `REDIS_URL` | ✅ | redis://redis:6379/0 | Redis connection |
-| `CORS_ORIGINS` | ✅ | http://localhost:3000 | Allowed origins |
-| `ENVIRONMENT` | ❌ | production | Runtime mode |
-| `DEBUG` | ❌ | false | Debug mode |
-| `BHUNakSHA_BASE_URL` | ❌ | https://bhunaksha.bihar.gov.in | BhuNaksha portal |
+See [.env.example](.env.example) for all configuration options.
 
 ---
 
-## 📦 Sample Data
+## 📸 Screenshots
 
-The platform includes a sample dataset in `backend/data/sample/sample_parcel.geojson`:
+### Home Page
+Government of India portal with tricolor header, search section, and feature cards.
 
-```
-Sample Parcel: 10.5 acres agricultural land
-├── 3 Co-tenure holders: A (50%), B (30%), C (20%)
-├── Road: Village Main Road (8m wide)
-├── Possessions: Owner A (west half), Owner B (east half)
-└── Commercial Zone: High value area near road
-```
+### Parcel Search
+Form with District/Circle/Mouza/Plot inputs, results with parcel details.
 
-Run the seed script to load this data:
-```bash
-docker-compose exec backend python scripts/seed.py
-```
+### GIS Map Viewer
+Interactive Leaflet map with satellite imagery and parcel boundary overlay.
 
----
+### Parcel Detail
+Full parcel information with map, documents, and administrative details.
 
-## 🔒 Security
-
-### Authentication
-- **JWT-based** with configurable expiry (default: 60 minutes)
-- Passwords hashed with **bcrypt**
-- Token refresh mechanism
-
-### Authorization (RBAC)
-| Role | Permissions |
-|------|-------------|
-| **Admin** | Full system access, user management, audit logs |
-| **Revenue Officer** | Create/review/approve partitions, generate decrees |
-| **Surveyor** | Create/edit parcels, upload GIS data |
-| **Citizen** | View own parcels, view partition plans |
-
-### Additional Security
-- Audit trails for all CRUD operations
-- Input validation via Pydantic schemas
-- CORS whitelist configuration
-- SQL injection prevention (SQLAlchemy ORM)
-- XSS protection (Next.js by default)
-- HTTPS support via Nginx
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-- Follow existing code style and conventions
-- Add tests for new features
-- Update documentation (README) for significant changes
-- Run tests before submitting PR
+### Documents Page
+List of downloaded documents with download buttons and metadata.
 
 ---
 
@@ -833,13 +751,17 @@ This project is licensed under the **MIT License**.
 
 ## 🙏 Acknowledgments
 
+- **Bihar BhuNaksha** for cadastral GIS data
+- **Department of Land Resources**, Government of India
+- Open-source community (FastAPI, Next.js, Leaflet, PostGIS)
 - **Uttar Pradesh Revenue Code** for the legal framework
-- **BhuNaksha Portal** for cadastral GIS data
-- Open-source GIS community (GeoPandas, Shapely, PostGIS)
-- Indian land records modernization initiative
 
 ---
 
 <div align="center">
-  <strong>Built with ❤️ for transparent, fair, and automated land partition</strong>
+  <strong>GeoKurra – Digital Land Information Portal</strong>
+  <br>
+  Phase 1: Parcel Retrieval & Satellite Visualization
+  <br>
+  <em>Built with ❤️ for transparent and accessible land records</em>
 </div>

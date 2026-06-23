@@ -1,83 +1,31 @@
 import { create } from "zustand";
-import { User, LoginRequest, RegisterRequest } from "@/types";
-import { authApi, setTokens, clearTokens } from "@/lib/api";
+import type { User } from "@/types";
 
 interface AuthState {
   user: User | null;
-  isLoading: boolean;
+  token: string | null;
   isAuthenticated: boolean;
-  error: string | null;
-  login: (data: LoginRequest) => Promise<void>;
-  register: (data: RegisterRequest) => Promise<void>;
+  setAuth: (user: User, token: string) => void;
   logout: () => void;
-  checkAuth: () => Promise<void>;
-  updateUser: (user: User) => void;
-  clearError: () => void;
+  setUser: (user: User) => void;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  isLoading: false,
+  token: null,
   isAuthenticated: false,
-  error: null,
-
-  login: async (data: LoginRequest) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await authApi.login(data);
-      setTokens(response.access_token, response.refresh_token);
-      set({
-        user: response.user,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-    } catch (error: any) {
-      const message = error.response?.data?.detail || "Login failed. Please try again.";
-      set({ error: message, isLoading: false });
-      throw error;
-    }
+  setAuth: (user, token) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
+    set({ user, token, isAuthenticated: true });
   },
-
-  register: async (data: RegisterRequest) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await authApi.register(data);
-      setTokens(response.access_token, response.refresh_token);
-      set({
-        user: response.user,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-    } catch (error: any) {
-      const message = error.response?.data?.detail || "Registration failed. Please try again.";
-      set({ error: message, isLoading: false });
-      throw error;
-    }
-  },
-
   logout: () => {
-    clearTokens();
-    set({ user: null, isAuthenticated: false, error: null });
-    window.location.href = "/login";
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    set({ user: null, token: null, isAuthenticated: false });
   },
-
-  checkAuth: async () => {
-    const token = typeof window !== "undefined" && localStorage.getItem("access_token");
-    if (!token) {
-      set({ isAuthenticated: false, user: null, isLoading: false });
-      return;
-    }
-    set({ isLoading: true });
-    try {
-      const user = await authApi.getMe();
-      set({ user, isAuthenticated: true, isLoading: false });
-    } catch {
-      clearTokens();
-      set({ user: null, isAuthenticated: false, isLoading: false });
-    }
+  setUser: (user) => {
+    localStorage.setItem("user", JSON.stringify(user));
+    set({ user });
   },
-
-  updateUser: (user: User) => set({ user }),
-
-  clearError: () => set({ error: null }),
 }));

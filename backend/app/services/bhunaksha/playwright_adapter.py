@@ -1,103 +1,106 @@
-import json
+import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
-from app.services.bhunaksha.models import BHUNAKSHA_URLS
+from app.services.bhunaksha.adapter import BhuNakshaAdapter
+from app.services.bhunaksha.models import PlotData
 
 logger = logging.getLogger(__name__)
 
 
 class BhuNakshaPlaywrightAdapter:
-    def __init__(self, state: str = "uttar_pradesh"):
+    """
+    Playwright-based adapter for scraping BhuNaksha portal.
+
+    Falls back to BhuNakshaAdapter (simulated data) if Playwright
+    is not available or if scraping fails.
+    """
+
+    def __init__(self, state: str = "bihar"):
         self.state = state
-        self.base_url = BHUNAKSHA_URLS.get(state, BHUNAKSHA_URLS["uttar_pradesh"])
-        self._browser = None
+        self.adapter = BhuNakshaAdapter(state)
+        self.browser = None
 
-    async def fetch_plot_geometry(self, pniu: str) -> Dict[str, Any]:
+    async def fetch_plot(self, district: str, circle: str,
+                         mouza: str, plot_number: str) -> PlotData:
         try:
-            from playwright.async_api import async_playwright
-            async with async_playwright() as pw:
-                browser = await pw.chromium.launch(headless=True)
-                page = await browser.new_page()
-                await page.goto(f"{self.base_url}/map", wait_until="networkidle")
-                await page.fill("#search-input", pniu)
-                await page.click("#search-button")
-                await page.wait_for_timeout(3000)
-                geometry = await self._extract_geometry_from_page(page)
-                await browser.close()
-                if geometry:
-                    return geometry
-        except ImportError:
-            logger.warning("playwright not installed, using fallback extraction")
-        except Exception as e:
-            logger.error(f"Playwright extraction failed for {pniu}: {e}")
-        return self.fallback_extraction(pniu)
+            return await self._scrape_plot(district, circle, mouza, plot_number)
+        except Exception as exc:
+            logger.warning("Playwright scrape failed, falling back to adapter: %s", exc)
+            return await self.adapter.search_parcel(district, circle, mouza, plot_number)
 
-    async def launch_browser(self):
+    async def _scrape_plot(self, district: str, circle: str,
+                           mouza: str, plot_number: str) -> PlotData:
+        page = await self._launch_browser()
         try:
-            from playwright.async_api import async_playwright
-            pw = await async_playwright().start()
-            self._browser = await pw.chromium.launch(headless=True)
-            return self._browser
-        except Exception as e:
-            logger.error(f"Failed to launch browser: {e}")
-            return None
+            await self._navigate_and_search(page, district, circle, mouza, plot_number)
+            geometry = await self._extract_geometry_from_page(page)
+            details = await self._extract_details_from_page(page)
+            details["geometry"] = geometry
+            return details
+        finally:
+            await page.close()
+            if self.browser:
+                await self.browser.close()
 
-    async def navigate_to_plot(self, pniu: str):
-        if not self._browser:
-            await self.launch_browser()
-        try:
-            page = await self._browser.new_page()
-            await page.goto(f"{self.base_url}/map", wait_until="networkidle")
-            await page.fill("#search-input", pniu)
-            await page.click("#search-button")
-            await page.wait_for_timeout(5000)
-            return page
-        except Exception as e:
-            logger.error(f"Navigation to plot {pniu} failed: {e}")
-            return None
+    async def _launch_browser(self):
+        from playwright.async_api import async_playwright
+        p = await async_playwright().start()
+        self.browser = await p.chromium.launch(headless=True)
+        page = await self.browser.new_page()
+        page.set_default_timeout(30000)
+        return page
 
-    async def _extract_geometry_from_page(self, page) -> Optional[Dict[str, Any]]:
+    async def _navigate_and_search(self, page, district: str, circle: str,
+                                   mouza: str, plot_number: str):
+        from app.core.config import settings
+        await page.goto(f"{settings.BHUNAKSHA_BASE_URL}/", wait_until="networkidle")
+        await page.fill("input[name='district']", district)
+        await page.fill("input[name='circle']", circle)
+        await page.fill("input[name='mouza']", mouza)
+        await page.fill("input[name='plot']", plot_number)
+        await page.click("button[type='submit']")
+        await page.wait_for_selector(".plot-details", timeout=15000)
+
+    async def _extract_geometry_from_page(self, page) -> Dict[str, Any]:
         try:
-            geometry_data = await page.evaluate("""
+            geo_str = await page.evaluate("""
                 () => {
-                    const geo = window.plotGeometry || null;
-                    if (geo) return JSON.parse(geo);
-                    const layers = window.map ? window.map.getLayers() : null;
-                    if (layers) {
-                        for (let i = 0; i < layers.getLength(); i++) {
-                            const layer = layers.item(i);
-                            const source = layer.getSource ? layer.getSource() : null;
-                            if (source) {
-                                const features = source.getFeatures();
-                                if (features && features.length > 0) {
-                                    return JSON.parse(features[0].getGeometry().toGeoJSON());
-                                }
-                            }
-                        }
-                    }
-                    return null;
+                    const el = document.getElementById('plot-geometry');
+                    return el ? el.textContent : null;
                 }
             """)
-            return geometry_data
-        except Exception as e:
-            logger.error(f"Failed to extract geometry from page: {e}")
-            return None
+            if geo_str:
+                import json
+                return json.loads(geo_str)
+        except Exception as exc:
+            logger.warning("Failed to extract geometry from page: %s", exc)
+        from app.services.bhunaksha.adapter import _generate_mock_geometry
+        return _generate_mock_geometry()
 
-    async def capture_network_response(self) -> Dict[str, Any]:
-        return {
-            "status": "captured",
-            "note": "Network response capture requires active page with network monitoring",
+    async def _extract_details_from_page(self, page) -> dict:
+        details = {}
+        fields = {
+            "pniu": "#pniu",
+            "plot_number": "#plot-number",
+            "khata_number": "#khata-number",
+            "survey_number": "#survey-number",
+            "village": "#village",
+            "mouza": "#mouza",
+            "circle": "#circle",
+            "district": "#district",
+            "total_area": "#total-area",
+            "land_type": "#land-type",
         }
+        for key, selector in fields.items():
+            try:
+                value = await page.text_content(selector)
+                if value:
+                    details[key] = value.strip()
+            except Exception:
+                pass
+        return details
 
-    def fallback_extraction(self, pniu: str) -> Dict[str, Any]:
-        from app.services.bhunaksha.adapter import BhuNakshaAdapter
-        adapter = BhuNakshaAdapter(self.state)
-        plot_data = adapter._simulated_fetch(pniu)
-        geometry = adapter.extract_plot_geometry(plot_data)
-        return {
-            "pniu": pniu,
-            "geometry": __import__("shapely.geometry").geometry.mapping(geometry) if geometry else None,
-            "source": "fallback",
-            "plot_details": adapter.extract_plot_details(plot_data),
-        }
+    async def fallback_search(self, district: str, circle: str,
+                              mouza: str, plot_number: str) -> PlotData:
+        return await self.adapter.search_parcel(district, circle, mouza, plot_number)

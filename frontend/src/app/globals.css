@@ -2,78 +2,205 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 142.1 76.2% 36.3%;
-    --primary-foreground: 355.7 100% 97.3%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 142.1 76.2% 36.3%;
-    --radius: 0.5rem;
-  }
+@import "leaflet/dist/leaflet.css";
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 142.1 70.6% 45.3%;
-    --primary-foreground: 144.9 80.4% 10%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 142.1 76.2% 36.3%;
-  }
+:root {
+  --gov-blue: #1e3a5f;
+  --gov-blue-dark: #152d4a;
+  --gov-blue-light: #2c5282;
+  --gov-saffron: #ff9933;
+  --gov-saffron-dark: #e68a00;
+  --gov-green: #138808;
+  --gov-green-dark: #0f6b06;
+  --gov-white: #ffffff;
+  --gov-gray: #f5f5f5;
+  --gov-gray-dark: #e0e0e0;
+  --gov-text-dark: #1f2937;
+  --gov-text-light: #6b7280;
+  --gov-border: #d1d5db;
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+* {
+  box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  color: var(--gov-text-dark);
+  background-color: var(--gov-gray);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--gov-border);
+}
+
+th {
+  background-color: var(--gov-gray);
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--gov-text-dark);
+}
+
+td {
+  font-size: 0.875rem;
+  color: var(--gov-text-dark);
+}
+
+tr:hover td {
+  background-color: var(--gov-gray);
+}
+
+/* Government portal card style */
+.gov-card {
+  @apply bg-white rounded-lg border border-gov-border shadow-gov;
+}
+
+.gov-card-header {
+  @apply px-6 py-4 border-b border-gov-border bg-gov-gray rounded-t-lg;
+}
+
+.gov-card-body {
+  @apply px-6 py-4;
+}
+
+.gov-card-footer {
+  @apply px-6 py-4 border-t border-gov-border bg-gov-gray rounded-b-lg;
+}
+
+/* Government form styles */
+.gov-form-group {
+  @apply mb-4;
+}
+
+.gov-form-label {
+  @apply block text-sm font-medium text-gov-text-dark mb-1;
+}
+
+.gov-form-input {
+  @apply w-full rounded-md border border-gov-border bg-white px-3 py-2 text-sm text-gov-text-dark focus:outline-none focus:ring-2 focus:ring-gov-blue focus:border-gov-blue;
+}
+
+.gov-form-select {
+  @apply w-full rounded-md border border-gov-border bg-white px-3 py-2 text-sm text-gov-text-dark focus:outline-none focus:ring-2 focus:ring-gov-blue focus:border-gov-blue appearance-none;
+}
+
+/* Government table */
+.gov-table {
+  @apply w-full border-collapse bg-white rounded-lg overflow-hidden border border-gov-border;
+}
+
+.gov-table th {
+  @apply px-4 py-3 bg-gov-gray text-sm font-semibold text-gov-text-dark border-b border-gov-border text-left;
+}
+
+.gov-table td {
+  @apply px-4 py-3 text-sm text-gov-text-dark border-b border-gov-border;
+}
+
+.gov-table tr:last-child td {
+  @apply border-b-0;
+}
+
+/* Badge styles */
+.gov-badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+
+.gov-badge-blue {
+  @apply gov-badge bg-gov-blue text-white;
+}
+
+.gov-badge-saffron {
+  @apply gov-badge bg-gov-saffron text-white;
+}
+
+.gov-badge-green {
+  @apply gov-badge bg-gov-green text-white;
+}
+
+/* Section headings */
+.gov-section-title {
+  @apply text-xl font-bold text-gov-text-dark border-b-2 border-gov-saffron pb-2 mb-4;
+}
+
+.gov-page-title {
+  @apply text-2xl font-bold text-gov-text-dark mb-6;
+}
+
+.gov-subtitle {
+  @apply text-sm text-gov-text-light;
+}
+
+/* Stats card */
+.gov-stat-card {
+  @apply bg-white rounded-lg border border-gov-border shadow-gov p-6;
+}
+
+.gov-stat-value {
+  @apply text-3xl font-bold text-gov-blue;
+}
+
+.gov-stat-label {
+  @apply text-sm text-gov-text-light mt-1;
+}
+
+/* Leaflet overrides */
 .leaflet-container {
   width: 100%;
   height: 100%;
-  z-index: 0;
+  border-radius: 0.5rem;
 }
 
-.map-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: 400px;
+.leaflet-control-zoom a {
+  color: var(--gov-text-dark) !important;
 }
 
-.custom-marker {
-  background: hsl(var(--primary));
-  border-radius: 50%;
-  border: 3px solid white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--gov-gray);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gov-gray-darker, #9ca3af);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gov-text-light);
+}
+
+/* Fullscreen map overrides */
+.map-fullscreen .leaflet-container {
+  border-radius: 0;
 }

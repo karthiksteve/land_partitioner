@@ -1,243 +1,323 @@
 "use client";
 
+import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useParcel, useDeleteParcel } from "@/hooks/useParcels";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { ParcelMap } from "@/components/map/ParcelMap";
-import { ParcelForm } from "@/components/forms/ParcelForm";
-import { UploadForm } from "@/components/forms/UploadForm";
-import { ShareChart } from "@/components/charts/ShareChart";
-import { PageLoading } from "@/components/ui/loading";
+import { useAuthStore } from "@/store/authStore";
+import { useParcel, useParcelGeometry } from "@/hooks/useParcels";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import MapContainerComponent from "@/components/map/MapContainer";
+import MapLegend from "@/components/map/MapLegend";
+import { Loading } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/toast";
-import { useUpdateParcel } from "@/hooks/useParcels";
-import { formatDate, formatArea } from "@/lib/utils";
-import { ArrowLeft, Edit, Trash2, MapPin, Users, FileText, Upload } from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  MapPin,
+  Download,
+  FileText,
+  ArrowLeft,
+  Info,
+  Map,
+  FileDown,
+  ExternalLink,
+} from "lucide-react";
+import { formatArea, formatDate, generatePNIUDisplay } from "@/utils";
+import { DOCUMENT_TYPE_LABELS } from "@/lib/constants";
 import Link from "next/link";
-import { useState } from "react";
 
 export default function ParcelDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { isAuthenticated } = useAuthStore();
   const id = params.id as string;
-  const { data: parcel, isLoading } = useParcel(id);
-  const deleteParcel = useDeleteParcel();
-  const updateParcel = useUpdateParcel();
-  const { addToast } = useToast();
-  const [showEditDialog, setShowEditDialog] = useState(false);
+  const { data: parcelData, isLoading, error } = useParcel(id);
+  const { data: geometryData, isLoading: geometryLoading } =
+    useParcelGeometry(id);
 
-  const handleDelete = async () => {
-    if (confirm("Are you sure you want to delete this parcel?")) {
-      try {
-        await deleteParcel.mutateAsync(id);
-        addToast("Parcel deleted", "success");
-        router.push("/parcels");
-      } catch {
-        addToast("Failed to delete", "error");
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, router]);
+
+  if (!isAuthenticated) return null;
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <Loading message="Loading parcel details..." fullPage />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error || !parcelData) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Info className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gov-text-dark mb-2">
+                Failed to Load Parcel
+              </h3>
+              <p className="text-sm text-gov-text-light mb-4">
+                {error instanceof Error
+                  ? error.message
+                  : "Parcel not found or you don't have access."}
+              </p>
+              <Link href="/search">
+                <Button variant="default">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Search
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const parcel = parcelData?.parcel || parcelData;
+
+  const polygons = (() => {
+    if (!geometryData) return undefined;
+    try {
+      const geom = geometryData?.geometry || geometryData;
+      if (geom?.type === "Polygon") {
+        return geom.coordinates as number[][][];
       }
-    }
-  };
-
-  const handleUpdate = async (data: any) => {
-    try {
-      await updateParcel.mutateAsync({ id, data });
-      setShowEditDialog(false);
-      addToast("Parcel updated", "success");
+      if (geom?.type === "MultiPolygon") {
+        return (geom.coordinates as number[][][][])[0];
+      }
     } catch {
-      addToast("Failed to update", "error");
+      return undefined;
     }
-  };
+    return undefined;
+  })();
 
-  const handleUpload = async (file: File, type: string) => {
-    try {
-      const { parcelsApi } = await import("@/lib/api");
-      await parcelsApi.uploadFile(id, file, type);
-      addToast("File uploaded", "success");
-    } catch {
-      addToast("Upload failed", "error");
-    }
-  };
+  const documents = parcelData?.documents || [];
 
-  if (isLoading) return <DashboardLayout><PageLoading /></DashboardLayout>;
-  if (!parcel) return <DashboardLayout><p>Parcel not found</p></DashboardLayout>;
+  const detailRows = [
+    { label: "PNIU", value: generatePNIUDisplay(parcel.pniu), highlight: true },
+    { label: "Plot Number", value: parcel.plot_number },
+    { label: "Khata Number", value: parcel.khata_number },
+    { label: "Area (Acres)", value: parcel.area_acres?.toFixed(4) },
+    { label: "Area (Hectares)", value: parcel.area_hectares?.toFixed(4) },
+    { label: "Village / Mouza", value: parcel.village || parcel.mouza },
+    { label: "Circle", value: parcel.circle },
+    { label: "District", value: parcel.district },
+    { label: "Land Type", value: parcel.land_type || "N/A" },
+    { label: "Owner Name", value: parcel.owner_name || "N/A" },
+    { label: "Father's Name", value: parcel.father_name || "N/A" },
+    { label: "Last Updated", value: formatDate(parcel.updated_at || parcel.created_at) },
+  ];
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">{parcel.parcel_id}</h1>
-            <p className="text-sm text-muted-foreground">Khasra: {parcel.khasra_number}</p>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <div className="mb-6">
+          <Link
+            href="/search"
+            className="inline-flex items-center text-sm text-gov-blue hover:underline"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Search Results
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Panel - Parcel Information */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-gov-saffron" />
+                  Parcel Information
+                </CardTitle>
+                <CardDescription>
+                  Administrative details for Plot #{parcel.plot_number}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableBody>
+                    {detailRows.map((row) => (
+                      <TableRow key={row.label}>
+                        <TableCell className="font-medium text-gov-text-light w-1/3">
+                          {row.label}
+                        </TableCell>
+                        <TableCell
+                          className={
+                            row.highlight
+                              ? "font-bold text-gov-blue font-mono"
+                              : ""
+                          }
+                        >
+                          {row.value}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            {/* Action Buttons */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Download className="h-4 w-4 text-gov-green" />
+                  Download Options
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button variant="default" size="sm">
+                    <FileDown className="h-4 w-4 mr-1.5" />
+                    Parcel PDF
+                  </Button>
+                  <Button variant="green" size="sm">
+                    <FileDown className="h-4 w-4 mr-1.5" />
+                    Land Record
+                  </Button>
+                  <Button variant="saffron" size="sm">
+                    <FileDown className="h-4 w-4 mr-1.5" />
+                    GeoJSON
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <FileDown className="h-4 w-4 mr-1.5" />
+                    Map Image
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          <div className="flex gap-2">
-            <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Edit className="h-4 w-4" /> Edit
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Edit Parcel</DialogTitle>
-                </DialogHeader>
-                <ParcelForm
-                  initialData={parcel}
-                  onSubmit={handleUpdate}
-                  isLoading={updateParcel.isPending}
-                />
-              </DialogContent>
-            </Dialog>
-            <Button variant="destructive" size="sm" className="gap-2" onClick={handleDelete}>
-              <Trash2 className="h-4 w-4" /> Delete
-            </Button>
+
+          {/* Right Panel - GIS Map */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Map className="h-5 w-5 text-gov-green" />
+                  GIS Map View
+                </CardTitle>
+                <CardDescription>
+                  Parcel boundary on satellite imagery
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="relative h-[500px]">
+                  {geometryLoading ? (
+                    <Loading message="Loading map..." />
+                  ) : (
+                    <MapContainerComponent
+                      polygons={polygons ? [polygons] : undefined}
+                      polygonColor="#ff4444"
+                      polygonFillColor="rgba(255, 68, 68, 0.2)"
+                      showControls={true}
+                    />
+                  )}
+                  <div className="absolute bottom-4 left-4 z-[1000]">
+                    <MapLegend />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <ParcelMap parcelId={id} className="h-[400px]" />
-          </div>
-
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Parcel Info</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Village</span>
-                  <span className="font-medium">{parcel.village}</span>
+        {/* Documents Section */}
+        <div className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-gov-blue" />
+                Available Documents
+              </CardTitle>
+              <CardDescription>
+                Downloadable land records and maps for this parcel
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {documents.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="h-10 w-10 text-gov-text-light mx-auto mb-3" />
+                  <p className="text-sm text-gov-text-light">
+                    No documents available for this parcel yet.
+                  </p>
+                  <p className="text-xs text-gov-text-light mt-1">
+                    Documents will appear here once generated.
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tehsil</span>
-                  <span className="font-medium">{parcel.tehsil}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">District</span>
-                  <span className="font-medium">{parcel.district}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Area</span>
-                  <span className="font-medium">{formatArea(parcel.area, parcel.area_unit)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Land Type</span>
-                  <Badge variant="secondary">{parcel.land_type}</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Soil Type</span>
-                  <span className="font-medium">{parcel.soil_type}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Status</span>
-                  <Badge variant={parcel.status === "active" ? "success" : "secondary"}>{parcel.status}</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Created</span>
-                  <span className="font-medium">{formatDate(parcel.created_at)}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {parcel.owners && parcel.owners.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Owners</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ShareChart
-                    data={parcel.owners.map((o) => ({ name: o.name, value: o.share_percentage }))}
-                    title="Owner Shares"
-                  />
-                  <div className="mt-3 space-y-2">
-                    {parcel.owners.map((owner) => (
-                      <div key={owner.id} className="flex justify-between text-sm">
-                        <span>{owner.name}</span>
-                        <span className="font-medium">{owner.share_percentage}%</span>
-                      </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Document Type</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Size</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {documents.map((doc: { id: string; document_type: string; title: string; created_at: string; file_size: number; mime_type: string }) => (
+                      <TableRow key={doc.id}>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              doc.document_type === "parcel_pdf"
+                                ? "default"
+                                : doc.document_type === "land_record"
+                                ? "green"
+                                : "saffron"
+                            }
+                          >
+                            {DOCUMENT_TYPE_LABELS[doc.document_type] ||
+                              doc.document_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {doc.title}
+                        </TableCell>
+                        <TableCell>{formatDate(doc.created_at)}</TableCell>
+                        <TableCell>
+                          {doc.file_size
+                            ? `${(doc.file_size / 1024).toFixed(1)} KB`
+                            : "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm">
+                            <Download className="h-3.5 w-3.5 mr-1" />
+                            Download
+                          </Button>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <Link href={`/partition?parcelId=${parcel.id}`}>
-              <Button className="w-full gap-2">
-                <MapPin className="h-4 w-4" /> Generate Partition Plans
-              </Button>
-            </Link>
-          </div>
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </div>
-
-        <Tabs defaultValue="owners">
-          <TabsList>
-            <TabsTrigger value="owners" className="flex items-center gap-2">
-              <Users className="h-4 w-4" /> Owners
-            </TabsTrigger>
-            <TabsTrigger value="plans" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" /> Plans
-            </TabsTrigger>
-            <TabsTrigger value="documents" className="flex items-center gap-2">
-              <Upload className="h-4 w-4" /> Documents
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="owners">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Owner Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {parcel.owners?.length > 0 ? (
-                  <div className="space-y-3">
-                    {parcel.owners.map((owner) => (
-                      <div key={owner.id} className="flex items-center justify-between rounded-lg border p-3">
-                        <div>
-                          <p className="font-medium">{owner.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Share: {owner.share_percentage}% | Possession: {owner.has_existing_possession ? "Yes" : "No"}
-                          </p>
-                        </div>
-                        <Badge variant={owner.has_existing_possession ? "success" : "secondary"}>
-                          {owner.has_existing_possession ? "Has Possession" : "No Possession"}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground py-8 text-center">No owners defined</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="plans">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Partition Plans</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground py-8 text-center">
-                  <Link href={`/partition?parcelId=${parcel.id}`} className="text-primary hover:underline">
-                    Create partition plans
-                  </Link>{" "}
-                  for this parcel
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="documents">
-            <UploadForm onUpload={handleUpload} parcelId={parcel.id} />
-          </TabsContent>
-        </Tabs>
       </div>
     </DashboardLayout>
   );

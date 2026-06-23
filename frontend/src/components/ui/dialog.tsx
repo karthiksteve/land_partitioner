@@ -1,122 +1,53 @@
 "use client";
 
 import * as React from "react";
-import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface DialogContextValue {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-const DialogContext = React.createContext<DialogContextValue | undefined>(undefined);
-
-function useDialog() {
-  const context = React.useContext(DialogContext);
-  if (!context) throw new Error("Dialog components must be used within Dialog");
-  return context;
-}
+import { X } from "lucide-react";
 
 interface DialogProps {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  open: boolean;
+  onClose: () => void;
   children: React.ReactNode;
-}
-
-function Dialog({ open: controlledOpen, onOpenChange, children }: DialogProps) {
-  const [internalOpen, setInternalOpen] = React.useState(false);
-  const open = controlledOpen ?? internalOpen;
-
-  const handleOpenChange = (val: boolean) => {
-    if (controlledOpen === undefined) setInternalOpen(val);
-    onOpenChange?.(val);
-  };
-
-  return (
-    <DialogContext.Provider value={{ open, onOpenChange: handleOpenChange }}>
-      {children}
-    </DialogContext.Provider>
-  );
-}
-
-interface DialogTriggerProps {
-  asChild?: boolean;
-  children: React.ReactNode;
-}
-
-function DialogTrigger({ asChild, children }: DialogTriggerProps) {
-  const { onOpenChange } = useDialog();
-  if (asChild) {
-    return React.cloneElement(React.Children.only(children) as React.ReactElement, {
-      onClick: () => onOpenChange(true),
-    });
-  }
-  return <button onClick={() => onOpenChange(true)}>{children}</button>;
-}
-
-interface DialogContentProps {
-  children: React.ReactNode;
+  title?: string;
   className?: string;
 }
 
-function DialogContent({ children, className }: DialogContentProps) {
-  const { open, onOpenChange } = useDialog();
+export function Dialog({
+  open,
+  onClose,
+  children,
+  title,
+  className,
+}: DialogProps) {
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={() => onOpenChange(false)}
+        onClick={onClose}
       />
       <div
         className={cn(
-          "relative z-50 w-full max-w-lg rounded-lg border bg-background p-6 shadow-lg animate-in fade-in-0 zoom-in-95",
+          "relative z-50 w-full max-w-lg rounded-lg border border-gov-border bg-white shadow-gov-lg",
           className
         )}
       >
-        <button
-          onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100"
-        >
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </button>
-        {children}
+        <div className="flex items-center justify-between border-b border-gov-border px-6 py-4">
+          {title && (
+            <h2 className="text-lg font-semibold text-gov-text-dark">
+              {title}
+            </h2>
+          )}
+          <button
+            onClick={onClose}
+            className="ml-auto rounded-md p-1 text-gov-text-light hover:bg-gov-gray hover:text-gov-text-dark"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="px-6 py-4">{children}</div>
       </div>
     </div>
   );
 }
-
-interface DialogHeaderProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-function DialogHeader({ children, className }: DialogHeaderProps) {
-  return (
-    <div className={cn("flex flex-col space-y-1.5 text-center sm:text-left mb-4", className)}>
-      {children}
-    </div>
-  );
-}
-
-interface DialogTitleProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-function DialogTitle({ children, className }: DialogTitleProps) {
-  return <h2 className={cn("text-lg font-semibold leading-none tracking-tight", className)}>{children}</h2>;
-}
-
-interface DialogDescriptionProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-function DialogDescription({ children, className }: DialogDescriptionProps) {
-  return <p className={cn("text-sm text-muted-foreground", className)}>{children}</p>;
-}
-
-export { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription };

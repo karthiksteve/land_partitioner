@@ -21,21 +21,6 @@ services:
     networks:
       - geokurra-network
 
-  redis:
-    image: redis:7-alpine
-    container_name: geokurra-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - geokurra-network
-
   backend:
     build:
       context: ./backend
@@ -43,24 +28,21 @@ services:
     container_name: geokurra-backend
     environment:
       - DATABASE_URL=postgresql+asyncpg://geokurra:geokurra@postgis:5432/geokurra
-      - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-change-this-secret-in-production}
       - ENVIRONMENT=production
       - DEBUG=false
       - CORS_ORIGINS=http://localhost:3000,http://localhost:8000
-      - BHUNakSHA_BASE_URL=https://bhunaksha.bihar.gov.in
+      - BHUNAKSHA_BASE_URL=https://bhunaksha.bihar.gov.in
     ports:
       - "8000:8000"
     depends_on:
       postgis:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     volumes:
-      - backend_media:/app/media
+      - backend_uploads:/app/uploads
       - backend_reports:/app/reports
     command: >
-      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4"
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
     networks:
       - geokurra-network
     restart: unless-stopped
@@ -96,32 +78,11 @@ services:
       - geokurra-network
     restart: unless-stopped
 
-  celery-worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: geokurra-celery
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://geokurra:geokurra@postgis:5432/geokurra
-      - REDIS_URL=redis://redis:6379/0
-    command: celery -A app.celery_app worker --loglevel=info
-    depends_on:
-      - postgis
-      - redis
-      - backend
-    volumes:
-      - backend_media:/app/media
-      - backend_reports:/app/reports
-    networks:
-      - geokurra-network
-    restart: unless-stopped
-
 networks:
   geokurra-network:
     driver: bridge
 
 volumes:
   postgis_data:
-  redis_data:
-  backend_media:
+  backend_uploads:
   backend_reports:

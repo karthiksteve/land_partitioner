@@ -1,21 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   images: {
-    domains: [
-      'maps.googleapis.com',
-      'mt1.googleapis.com',
-      'mt2.googleapis.com',
-      'mt3.googleapis.com',
-      'khms0.googleapis.com',
-      'khms1.googleapis.com',
-      'server.arcgisonline.com',
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
     ],
-  },
-  eslint: {
-    ignoreDuringBuilds: false,
-  },
-  typescript: {
-    ignoreBuildErrors: false,
   },
 };
 

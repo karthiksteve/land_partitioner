@@ -1,29 +1,28 @@
-import { COLORS, PLAN_COLORS } from "@/lib/constants";
+"use client";
 
-const legendItems = [
-  { label: "Original Parcel", color: COLORS.parcel_original },
-  { label: "Existing Possession", color: COLORS.possession },
-  { label: "Commercial Zone", color: COLORS.commercial },
-  { label: "Road Frontage", color: COLORS.road_frontage },
-  { label: "Plan A", color: PLAN_COLORS.A },
-  { label: "Plan B", color: PLAN_COLORS.B },
-  { label: "Plan C", color: PLAN_COLORS.C },
-];
-
-export function MapLegend() {
+export default function MapLegend() {
   return (
-    <div className="absolute bottom-4 left-4 z-[1000] rounded-lg border bg-card p-3 shadow-lg">
-      <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase">Legend</p>
-      <div className="space-y-1.5">
-        {legendItems.map((item) => (
-          <div key={item.label} className="flex items-center gap-2">
-            <div
-              className="h-3 w-3 rounded-sm border border-gray-300"
-              style={{ backgroundColor: item.color }}
-            />
-            <span className="text-xs">{item.label}</span>
-          </div>
-        ))}
+    <div className="bg-white rounded-md border border-gov-border shadow-gov p-3 text-xs">
+      <h4 className="font-semibold text-gov-text-dark mb-2 text-sm">
+        Map Legend
+      </h4>
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-0.5 bg-[#ff4444]" />
+          <span className="text-gov-text-dark">Parcel Boundary</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-3 bg-[rgba(255,68,68,0.2)] border border-[#ff4444] rounded" />
+          <span className="text-gov-text-dark">Parcel Area</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-[#ff4444]" />
+          <span className="text-gov-text-dark">Boundary Vertex</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-0.5 bg-blue-500" />
+          <span className="text-gov-text-dark">District Boundary</span>
+        </div>
       </div>
     </div>
   );

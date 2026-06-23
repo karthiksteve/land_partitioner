@@ -1,119 +1,95 @@
-import { PlanType } from "@/types";
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1";
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+export const MAP_TILE_URL =
+  process.env.NEXT_PUBLIC_MAP_TILE_URL ||
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
-export const COLORS: Record<string, string> = {
-  primary: "#16a34a",
-  secondary: "#64748b",
-  accent: "#f59e0b",
-  destructive: "#ef4444",
-  parcel_original: "#9ca3af",
-  possession: "#f97316",
-  commercial: "#a855f7",
-  road_frontage: "#eab308",
-};
+export const SATELLITE_TILE_URL =
+  process.env.NEXT_PUBLIC_SATELLITE_TILE_URL ||
+  "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}";
 
-export const PLAN_COLORS: Record<PlanType, string> = {
-  A: "#ef4444",
-  B: "#16a34a",
-  C: "#3b82f6",
-};
+export const DEFAULT_LAT = parseFloat(
+  process.env.NEXT_PUBLIC_DEFAULT_LAT || "25.6"
+);
+export const DEFAULT_LNG = parseFloat(
+  process.env.NEXT_PUBLIC_DEFAULT_LNG || "85.1"
+);
+export const DEFAULT_ZOOM = parseInt(
+  process.env.NEXT_PUBLIC_DEFAULT_ZOOM || "8",
+  10
+);
 
-export const RULE_109_DESCRIPTIONS: Record<string, string> = {
-  "109(a)": "Every co-owner shall be entitled to partition according to their share",
-  "109(b)": "Partition shall be made by metes and bounds",
-  "109(c)": "Each share shall have access to a road or pathway",
-  "109(d)": "Shares shall be as compact as possible",
-  "109(e)": "Existing possession shall be respected to the extent possible",
-  "109(f)": "Commercial land shall be fairly distributed",
-  "109(g)": "The partition shall not diminish the value of any share",
-};
-
-export const LAYER_STYLES: Record<string, Record<string, any>> = {
-  parcel: {
-    color: "#9ca3af",
-    weight: 2,
-    fillColor: "#9ca3af",
-    fillOpacity: 0.3,
-  },
-  possession: {
-    color: "#f97316",
-    weight: 3,
-    fillColor: "#f97316",
-    fillOpacity: 0.2,
-  },
-  commercial: {
-    color: "#a855f7",
-    weight: 2,
-    fillColor: "#a855f7",
-    fillOpacity: 0.3,
-  },
-  road_frontage: {
-    color: "#eab308",
-    weight: 4,
-    fillColor: "#eab308",
-    fillOpacity: 0.3,
-  },
-  plan_a: {
-    color: "#ef4444",
-    weight: 3,
-    fillColor: "#ef4444",
-    fillOpacity: 0.15,
-  },
-  plan_b: {
-    color: "#16a34a",
-    weight: 3,
-    fillColor: "#16a34a",
-    fillOpacity: 0.15,
-  },
-  plan_c: {
-    color: "#3b82f6",
-    weight: 3,
-    fillColor: "#3b82f6",
-    fillOpacity: 0.15,
-  },
-};
-
-export const DEFAULT_MAP_CENTER: [number, number] = [20.5937, 78.9629];
-export const DEFAULT_MAP_ZOOM = 5;
-export const INDIA_BOUNDS: [[number, number], [number, number]] = [
-  [6.75, 68.18],
-  [37.1, 97.42],
+export const BIHAR_DISTRICTS = [
+  "Araria",
+  "Arwal",
+  "Aurangabad",
+  "Banka",
+  "Begusarai",
+  "Bhagalpur",
+  "Bhojpur",
+  "Buxar",
+  "Darbhanga",
+  "East Champaran",
+  "Gaya",
+  "Gopalganj",
+  "Jamui",
+  "Jehanabad",
+  "Kaimur",
+  "Katihar",
+  "Khagaria",
+  "Kishanganj",
+  "Lakhisarai",
+  "Madhepura",
+  "Madhubani",
+  "Munger",
+  "Muzaffarpur",
+  "Nalanda",
+  "Nawada",
+  "Patna",
+  "Purnia",
+  "Rohtas",
+  "Saharsa",
+  "Samastipur",
+  "Saran",
+  "Sheikhpura",
+  "Sheohar",
+  "Sitamarhi",
+  "Siwan",
+  "Supaul",
+  "Vaishali",
+  "West Champaran",
 ];
 
-export const SCORE_THRESHOLDS = {
-  excellent: 80,
-  good: 60,
-  poor: 40,
+export const GOVERNMENT_COLORS = {
+  blue: "#1e3a5f",
+  saffron: "#ff9933",
+  green: "#138808",
+  white: "#ffffff",
+  gray: "#f5f5f5",
 };
 
-export const PARCEL_TYPES = [
-  "agricultural",
-  "residential",
-  "commercial",
-  "industrial",
-  "mixed",
-] as const;
+export const PARCEL_BOUNDARY_COLORS = {
+  stroke: "#ff4444",
+  fill: "rgba(255, 68, 68, 0.2)",
+  highlightStroke: "#ff0000",
+  highlightFill: "rgba(255, 0, 0, 0.3)",
+};
 
-export const SOIL_TYPES = [
-  "alluvial",
-  "black",
-  "red",
-  "laterite",
-  "desert",
-  "mountain",
-] as const;
+export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  parcel_pdf: "Parcel PDF",
+  land_record: "Land Record",
+  geojson: "GeoJSON",
+  map_image: "Map Image",
+  khasra: "Khasra",
+  khatauni: "Khatauni",
+};
 
-export const AREA_UNITS = ["sqm", "hectare", "acre", "sqft"] as const;
-
-export const IMPROVEMENT_OPTIONS = [
-  "well",
-  "tubewell",
-  "trees",
-  "building",
-  "fence",
-  "irrigation",
-  "road",
-] as const;
-
-export const BOUNDARY_TYPES = ["demarcated", "undemarcated", "partially_demarcated"] as const;
+export const NAV_LINKS = [
+  { label: "Home", href: "/", public: true },
+  { label: "Parcel Search", href: "/search", public: false },
+  { label: "GIS Viewer", href: "/gis-viewer", public: false },
+  { label: "Documents", href: "/documents", public: false },
+  { label: "Help", href: "/help", public: true },
+  { label: "Contact", href: "/contact", public: true },
+];

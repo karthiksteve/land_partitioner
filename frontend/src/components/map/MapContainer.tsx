@@ -1,63 +1,62 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, INDIA_BOUNDS, LAYER_STYLES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
-import { Maximize2, Minimize2, Layers, ZoomIn, ZoomOut } from "lucide-react";
+import { MAP_TILE_URL, SATELLITE_TILE_URL } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
+import { Maximize2, Minimize2, Map, Satellite } from "lucide-react";
 
 interface MapContainerProps {
-  children?: React.ReactNode;
   center?: [number, number];
   zoom?: number;
-  className?: string;
+  polygons?: number[][][];
+  polygonColor?: string;
+  polygonFillColor?: string;
   onMapClick?: (latlng: L.LatLng) => void;
-  geoJsonLayers?: Array<{
-    id: string;
-    data: GeoJSON.FeatureCollection;
-    style?: L.PathOptions;
-    onClick?: (feature: any) => void;
-  }>;
-  showLayerControl?: boolean;
-  showFullscreen?: boolean;
+  className?: string;
+  showControls?: boolean;
 }
 
-const baseLayers = [
-  {
-    name: "OpenStreetMap",
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: "&copy; OpenStreetMap contributors",
-  },
-  {
-    name: "Google Satellite",
-    url: "https://mt1.googleapis.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-    attribution: "&copy; Google",
-  },
-  {
-    name: "Google Hybrid",
-    url: "https://mt1.googleapis.com/vt/lyrs=y&x={x}&y={y}&z={z}",
-    attribution: "&copy; Google",
-  },
-];
-
-export function MapContainer({
-  children,
-  center = DEFAULT_MAP_CENTER,
-  zoom = DEFAULT_MAP_ZOOM,
-  className,
+export default function MapContainerComponent({
+  center = [25.6, 85.1],
+  zoom = 8,
+  polygons,
+  polygonColor = "#ff4444",
+  polygonFillColor = "rgba(255, 68, 68, 0.2)",
   onMapClick,
-  geoJsonLayers,
-  showLayerControl = true,
-  showFullscreen = true,
+  className = "",
+  showControls = true,
 }: MapContainerProps) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const polygonRef = useRef<L.Polygon | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [activeBaseLayer, setActiveBaseLayer] = useState(0);
-  const [showLayers, setShowLayers] = useState(false);
-  const geoJsonLayersRef = useRef<Map<string, L.GeoJSON>>(new Map());
+  const [layerType, setLayerType] = useState<"street" | "satellite">("street");
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+
+  const currentTileLayer = useRef<L.TileLayer | null>(null);
+
+  const switchLayer = useCallback(
+    (type: "street" | "satellite") => {
+      setLayerType(type);
+      if (!mapRef.current) return;
+      if (currentTileLayer.current) {
+        mapRef.current.removeLayer(currentTileLayer.current);
+      }
+      const url = type === "street" ? MAP_TILE_URL : SATELLITE_TILE_URL;
+      const attribution =
+        type === "street"
+          ? "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>"
+          : "&copy; Google";
+      currentTileLayer.current = L.tileLayer(url, {
+        attribution,
+        maxZoom: 20,
+      });
+      currentTileLayer.current.addTo(mapRef.current);
+    },
+    []
+  );
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
@@ -65,21 +64,24 @@ export function MapContainer({
     const map = L.map(mapContainerRef.current, {
       center,
       zoom,
-      maxBounds: INDIA_BOUNDS,
-      maxBoundsViscosity: 1.0,
-      zoomControl: false,
+      zoomControl: showControls,
+      attributionControl: showControls,
     });
 
-    L.tileLayer(baseLayers[0].url, {
-      attribution: baseLayers[0].attribution,
+    const tileLayer = L.tileLayer(MAP_TILE_URL, {
+      attribution:
+        "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>",
       maxZoom: 20,
-    }).addTo(map);
-
-    L.control.zoom({ position: "bottomright" }).addTo(map);
-
-    map.on("click", (e: L.LeafletMouseEvent) => {
-      onMapClick?.(e.latlng);
     });
+    tileLayer.addTo(map);
+    currentTileLayer.current = tileLayer;
+
+    if (onMapClick) {
+      map.on("click", (e: L.LeafletMouseEvent) => {
+        setCoordinates({ lat: e.latlng.lat, lng: e.latlng.lng });
+        onMapClick(e.latlng);
+      });
+    }
 
     mapRef.current = map;
 
@@ -87,117 +89,100 @@ export function MapContainer({
       map.remove();
       mapRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (!mapRef.current) return;
-
-    mapRef.current.eachLayer((layer) => {
-      if (layer instanceof L.TileLayer) {
-        mapRef.current?.removeLayer(layer);
-      }
-    });
-
-    L.tileLayer(baseLayers[activeBaseLayer].url, {
-      attribution: baseLayers[activeBaseLayer].attribution,
-      maxZoom: 20,
-    }).addTo(mapRef.current);
-  }, [activeBaseLayer]);
+    mapRef.current.setView(center, zoom);
+  }, [center, zoom]);
 
   useEffect(() => {
     if (!mapRef.current) return;
+    if (polygonRef.current) {
+      mapRef.current.removeLayer(polygonRef.current);
+    }
+    if (polygons && polygons.length > 0) {
+      const polygon = L.polygon(polygons, {
+        color: polygonColor,
+        fillColor: polygonFillColor,
+        fillOpacity: 0.4,
+        weight: 2,
+      }).addTo(mapRef.current);
+      polygonRef.current = polygon;
+      const bounds = polygon.getBounds();
+      mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [polygons, polygonColor, polygonFillColor]);
 
-    geoJsonLayersRef.current.forEach((layer) => {
-      mapRef.current?.removeLayer(layer);
-    });
-    geoJsonLayersRef.current.clear();
-
-    geoJsonLayers?.forEach((gl) => {
-      const layer = L.geoJSON(gl.data, {
-        style: gl.style || { color: "#16a34a", weight: 2, fillOpacity: 0.1 },
-        onEachFeature: (feature, featureLayer) => {
-          if (gl.onClick) {
-            featureLayer.on("click", () => gl.onClick(feature));
-          }
-          featureLayer.bindTooltip(
-            feature.properties?.name || feature.properties?.parcel_id || "Feature",
-            { sticky: true }
-          );
-        },
-      }).addTo(mapRef.current!);
-      geoJsonLayersRef.current.set(gl.id, layer);
-    });
-  }, [geoJsonLayers]);
-
-  const toggleFullscreen = async () => {
+  const toggleFullscreen = useCallback(async () => {
+    if (!mapContainerRef.current) return;
     if (!document.fullscreenElement) {
-      await mapContainerRef.current?.requestFullscreen();
+      await mapContainerRef.current.requestFullscreen();
       setIsFullscreen(true);
     } else {
       await document.exitFullscreen();
       setIsFullscreen(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", handleFsChange);
-    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+    const handler = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
   return (
-    <div className={cn("relative rounded-lg overflow-hidden border", className)}>
-      <div ref={mapContainerRef} className="h-full w-full min-h-[400px]" />
+    <div className={`relative ${className}`}>
+      <div
+        ref={mapContainerRef}
+        className="w-full h-full min-h-[400px] rounded-lg border border-gov-border"
+      />
 
-      {/* Controls */}
-      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
-        {showLayerControl && (
-          <div className="relative">
-            <Button
-              variant="secondary"
-              size="icon"
-              className="shadow-md"
-              onClick={() => setShowLayers(!showLayers)}
-            >
-              <Layers className="h-4 w-4" />
-            </Button>
-            {showLayers && (
-              <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border bg-card p-2 shadow-lg">
-                <p className="mb-2 text-xs font-medium text-muted-foreground">Base Layers</p>
-                {baseLayers.map((layer, idx) => (
-                  <button
-                    key={layer.name}
-                    className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-accent ${
-                      activeBaseLayer === idx ? "bg-accent font-medium" : ""
-                    }`}
-                    onClick={() => setActiveBaseLayer(idx)}
-                  >
-                    <div
-                      className={`h-2 w-2 rounded-full ${
-                        activeBaseLayer === idx ? "bg-primary" : "bg-muted-foreground"
-                      }`}
-                    />
-                    {layer.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {showFullscreen && (
+      {showControls && (
+        <div className="absolute top-2 right-2 z-[1000] flex flex-col gap-1">
           <Button
-            variant="secondary"
+            variant="outline"
             size="icon"
-            className="shadow-md"
-            onClick={toggleFullscreen}
+            onClick={() =>
+              switchLayer(layerType === "street" ? "satellite" : "street")
+            }
+            className="bg-white shadow-gov"
+            title={`Switch to ${layerType === "street" ? "Satellite" : "Street"} view`}
           >
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            {layerType === "street" ? (
+              <Satellite className="h-4 w-4" />
+            ) : (
+              <Map className="h-4 w-4" />
+            )}
           </Button>
-        )}
-      </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleFullscreen}
+            className="bg-white shadow-gov"
+            title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+          >
+            {isFullscreen ? (
+              <Minimize2 className="h-4 w-4" />
+            ) : (
+              <Maximize2 className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      )}
 
-      {children}
+      {coordinates && showControls && (
+        <div className="absolute bottom-2 left-2 z-[1000] bg-white/90 rounded px-2 py-1 text-xs text-gov-text-dark shadow-gov border border-gov-border">
+          Lat: {coordinates.lat.toFixed(6)}, Lng: {coordinates.lng.toFixed(6)}
+        </div>
+      )}
+
+      <div className="absolute bottom-2 right-2 z-[1000] bg-white/90 rounded px-2 py-1 text-xs text-gov-text-dark shadow-gov border border-gov-border">
+        {layerType === "street" ? "Street Map" : "Satellite"}
+      </div>
     </div>
   );
 }

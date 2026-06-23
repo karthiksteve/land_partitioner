@@ -1,177 +1,238 @@
 "use client";
 
-import { useParcels } from "@/hooks/useParcels";
-import { usePlans } from "@/hooks/usePartition";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { TableLoading } from "@/components/ui/loading";
-import { ShareChart } from "@/components/charts/ShareChart";
-import { ComparisonChart } from "@/components/charts/ComparisonChart";
-import { Map, Split, Users, FileText, Plus, ArrowRight, Clock } from "lucide-react";
+import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
+import {
+  Search,
+  Map,
+  FileText,
+  Clock,
+  MapPin,
+  Download,
+} from "lucide-react";
+import { formatDate } from "@/utils";
+
+const recentSearches = [
+  {
+    id: "1",
+    district: "Patna",
+    plot_number: "123",
+    mouza: "Maner",
+    searched_at: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: "2",
+    district: "Gaya",
+    plot_number: "456",
+    mouza: "Bodh Gaya",
+    searched_at: new Date(Date.now() - 7200000).toISOString(),
+  },
+  {
+    id: "3",
+    district: "Nalanda",
+    plot_number: "789",
+    mouza: "Biharsharif",
+    searched_at: new Date(Date.now() - 86400000).toISOString(),
+  },
+];
 
 export default function DashboardPage() {
-  const { data: parcels, isLoading: parcelsLoading } = useParcels();
-  const { data: plans } = usePlans();
+  const router = useRouter();
+  const { isAuthenticated, user } = useAuthStore();
 
-  const activePlans = plans?.filter((p) => p.status === "generated" || p.status === "approved") || [];
-  const pendingReview = plans?.filter((p) => p.status === "generated") || [];
-  const totalOwners = parcels?.reduce((sum, p) => sum + (p.owners?.length || 0), 0) || 0;
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, router]);
 
-  const statsCards = [
-    {
-      title: "Total Parcels",
-      value: parcels?.length || 0,
-      icon: <Map className="h-5 w-5" />,
-      color: "text-blue-600",
-      bg: "bg-blue-100 dark:bg-blue-950",
-    },
-    {
-      title: "Active Plans",
-      value: activePlans.length,
-      icon: <Split className="h-5 w-5" />,
-      color: "text-green-600",
-      bg: "bg-green-100 dark:bg-green-950",
-    },
-    {
-      title: "Pending Review",
-      value: pendingReview.length,
-      icon: <Clock className="h-5 w-5" />,
-      color: "text-yellow-600",
-      bg: "bg-yellow-100 dark:bg-yellow-950",
-    },
-    {
-      title: "Total Owners",
-      value: totalOwners,
-      icon: <Users className="h-5 w-5" />,
-      color: "text-purple-600",
-      bg: "bg-purple-100 dark:bg-purple-950",
-    },
-  ];
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const quickActions = [
-    { label: "New Parcel", href: "/parcels", icon: Plus },
-    { label: "Generate Plan", href: "/partition", icon: Split },
-    { label: "View Reports", href: "/reports", icon: FileText },
+    {
+      title: "New Parcel Search",
+      description: "Search for a land parcel",
+      icon: Search,
+      href: "/search",
+      color: "text-gov-blue",
+      bg: "bg-blue-50",
+    },
+    {
+      title: "GIS Viewer",
+      description: "View parcels on map",
+      icon: Map,
+      href: "/gis-viewer",
+      color: "text-gov-green",
+      bg: "bg-green-50",
+    },
+    {
+      title: "Documents",
+      description: "Access your documents",
+      icon: FileText,
+      href: "/documents",
+      color: "text-gov-saffron",
+      bg: "bg-orange-50",
+    },
   ];
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <div className="flex gap-2">
-            {quickActions.map((action) => (
-              <Link key={action.label} href={action.href}>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <action.icon className="h-4 w-4" />
-                  {action.label}
-                </Button>
-              </Link>
-            ))}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Welcome */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gov-text-dark">
+            Welcome, {user?.full_name || user?.username}
+          </h1>
+          <p className="text-gov-text-light mt-1">
+            GeoKurra Digital Land Information Portal Dashboard
+          </p>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="gov-stat-card">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="gov-stat-value">0</div>
+                <div className="gov-stat-label">Total Searches</div>
+              </div>
+              <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center">
+                <Search className="h-6 w-6 text-gov-blue" />
+              </div>
+            </div>
+          </div>
+
+          <div className="gov-stat-card">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="gov-stat-value">0</div>
+                <div className="gov-stat-label">Parcels Found</div>
+              </div>
+              <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center">
+                <MapPin className="h-6 w-6 text-gov-green" />
+              </div>
+            </div>
+          </div>
+
+          <div className="gov-stat-card">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="gov-stat-value">0</div>
+                <div className="gov-stat-label">Documents Downloaded</div>
+              </div>
+              <div className="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center">
+                <Download className="h-6 w-6 text-gov-saffron" />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {statsCards.map((stat) => (
-            <Card key={stat.title}>
-              <CardContent className="flex items-center gap-4 p-6">
-                <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${stat.bg}`}>
-                  <div className={stat.color}>{stat.icon}</div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Recent Searches */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Recent Parcel Searches</CardTitle>
+                    <CardDescription>Your recent search activity</CardDescription>
+                  </div>
+                  <Link href="/search">
+                    <Button variant="outline" size="sm">
+                      New Search
+                    </Button>
+                  </Link>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{stat.title}</p>
-                  <p className="text-2xl font-bold">
-                    {parcelsLoading ? "-" : stat.value}
-                  </p>
-                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>District</TableHead>
+                      <TableHead>Plot No.</TableHead>
+                      <TableHead>Mouza</TableHead>
+                      <TableHead>Searched At</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentSearches.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-gov-text-light py-8">
+                          No recent searches. Start by searching a parcel.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      recentSearches.map((search) => (
+                        <TableRow key={search.id}>
+                          <TableCell className="font-medium">
+                            {search.district}
+                          </TableCell>
+                          <TableCell>{search.plot_number}</TableCell>
+                          <TableCell>{search.mouza}</TableCell>
+                          <TableCell>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3 text-gov-text-light" />
+                              {formatDate(search.searched_at)}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Recent Parcels */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Recent Parcels</CardTitle>
-              <Link href="/parcels">
-                <Button variant="ghost" size="sm" className="gap-1">
-                  View All <ArrowRight className="h-3 w-3" />
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent>
-              {parcelsLoading ? (
-                <TableLoading />
-              ) : parcels && parcels.length > 0 ? (
-                <div className="space-y-3">
-                  {parcels.slice(0, 5).map((parcel) => (
-                    <Link
-                      key={parcel.id}
-                      href={`/parcels/${parcel.id}`}
-                      className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                    >
-                      <div>
-                        <p className="text-sm font-medium">{parcel.parcel_id}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {parcel.village}, {parcel.tehsil}
-                        </p>
+          {/* Quick Actions */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardDescription>Frequently used tools</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {quickActions.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <Link key={action.title} href={action.href}>
+                      <div className="flex items-center gap-3 p-3 rounded-lg border border-gov-border hover:bg-gov-gray transition-colors cursor-pointer">
+                        <div
+                          className={`w-10 h-10 rounded-lg ${action.bg} flex items-center justify-center`}
+                        >
+                          <Icon className={`h-5 w-5 ${action.color}`} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gov-text-dark">
+                            {action.title}
+                          </p>
+                          <p className="text-xs text-gov-text-light">
+                            {action.description}
+                          </p>
+                        </div>
                       </div>
-                      <Badge variant="secondary">{parcel.area} {parcel.area_unit}</Badge>
                     </Link>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground py-8 text-center">No parcels yet</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Ownership Distribution */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Ownership Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {parcels && parcels.length > 0 ? (
-                <ShareChart
-                  data={
-                    parcels.slice(0, 6).map((p) => ({
-                      name: p.parcel_id,
-                      value: p.area,
-                    }))
-                  }
-                  title="Parcel Area Distribution"
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground py-8 text-center">No data available</p>
-              )}
-            </CardContent>
-          </Card>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </div>
         </div>
-
-        {/* Plan Scores Summary */}
-        {plans && plans.length > 0 && (
-          <ComparisonChart
-            plans={plans.filter((p) => p.status !== "draft").map((p) => ({
-              planType: p.plan_type,
-              metrics: [
-                { name: "Compactness", score: p.compactness_score, weight: 1, description: "" },
-                { name: "Road Frontage", score: p.road_frontage_score, weight: 1, description: "" },
-                { name: "Commercial", score: p.commercial_fairness_score, weight: 1, description: "" },
-                { name: "Possession", score: p.possession_score, weight: 1, description: "" },
-                { name: "Accessibility", score: p.accessibility_score, weight: 1, description: "" },
-                { name: "Equity", score: p.equity_score, weight: 1, description: "" },
-                { name: "Legal", score: p.legal_compliance_score, weight: 1, description: "" },
-              ],
-            }))}
-            title="Plan Scores Summary"
-          />
-        )}
       </div>
     </DashboardLayout>
   );

@@ -1,20 +1,13 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
-import { Providers } from "./providers";
-
-const inter = Inter({ subsets: ["latin"] });
+import Providers from "./providers";
 
 export const metadata: Metadata = {
-  title: "GeoKurra - AI-Powered Land Partition Decision Support System",
+  title: "GeoKurra - Digital Land Information Portal | Government of India",
   description:
-    "Rule 109 compliant land partition decision support system using AI and GIS technology for fair and equitable land distribution.",
-  keywords: ["land partition", "rule 109", "GIS", "AI", "geokurra", "bhunaksha"],
-  openGraph: {
-    title: "GeoKurra",
-    description: "AI-Powered Rule 109 Compliant Land Partition System",
-    type: "website",
-  },
+    "Access cadastral records, parcel boundaries, and land information from Bihar BhuNaksha. Government of India Digital Land Information Portal.",
+  keywords:
+    "land records, bhu naksha, bihar, cadastral, gis, parcel search, government of india",
 };
 
 export default function RootLayout({
@@ -23,8 +16,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="en">
+      <body>
         <Providers>{children}</Providers>
       </body>
     </html>

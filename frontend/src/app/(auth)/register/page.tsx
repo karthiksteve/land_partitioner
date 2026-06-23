@@ -1,141 +1,215 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Split, Loader2, AlertCircle } from "lucide-react";
-
-const registerSchema = z
-  .object({
-    full_name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Invalid email address"),
-    username: z.string().min(3, "Username must be at least 3 characters"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirm_password: z.string(),
-    role: z.string(),
-  })
-  .refine((data) => data.password === data.confirm_password, {
-    message: "Passwords don't match",
-    path: ["confirm_password"],
-  });
-
-type RegisterFormData = z.infer<typeof registerSchema>;
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Globe } from "lucide-react";
 
 export default function RegisterPage() {
-  const { register: registerUser, isLoading, error, clearError } = useAuth();
-  const [showError, setShowError] = useState(false);
+  const router = useRouter();
+  const { register } = useAuth();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("citizen");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: { role: "citizen" },
-  });
+  const roleOptions = [
+    { value: "citizen", label: "Citizen" },
+    { value: "officer", label: "Government Officer" },
+  ];
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!fullName.trim()) {
+      setError("Full name is required");
+      return;
+    }
+    if (!email.trim()) {
+      setError("Email is required");
+      return;
+    }
+    if (!username.trim()) {
+      setError("Username is required");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
     try {
-      setShowError(false);
-      clearError();
-      await registerUser(data);
-    } catch {
-      setShowError(true);
+      await register({
+        full_name: fullName,
+        email,
+        username,
+        password,
+        role,
+      });
+      router.push("/login?registered=true");
+    } catch (err: unknown) {
+      if (err && typeof err === "object" && "response" in err) {
+        const axiosErr = err as {
+          response?: { data?: { detail?: string } };
+        };
+        setError(
+          axiosErr.response?.data?.detail || "Registration failed. Please try again."
+        );
+      } else {
+        setError("Registration failed. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gov-gray px-4 py-8">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
-            <Split className="h-6 w-6 text-primary-foreground" />
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 rounded-full bg-gov-blue flex items-center justify-center">
+              <Globe className="h-8 w-8 text-gov-saffron" />
+            </div>
           </div>
-          <CardTitle className="text-2xl">Create Account</CardTitle>
-          <CardDescription>Join GeoKurra for AI-powered land partition</CardDescription>
+          <CardTitle className="text-xl">Create Account</CardTitle>
+          <CardDescription>
+            Register for GeoKurra Digital Land Information Portal
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {(error && showError) && (
-              <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-                <AlertCircle className="h-4 w-4" />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gov-text-dark mb-1">
+                Full Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="text"
+                placeholder="Enter your full name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gov-text-dark mb-1">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gov-text-dark mb-1">
+                Username <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="text"
+                placeholder="Choose a username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gov-text-dark mb-1">
+                Password <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="password"
+                placeholder="Create a password (min. 6 characters)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gov-text-dark mb-1">
+                Confirm Password <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="password"
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gov-text-dark mb-1">
+                Role
+              </label>
+              <Select
+                options={roleOptions}
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            {error && (
+              <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
                 {error}
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Full Name"
-                placeholder="John Doe"
-                error={errors.full_name?.message}
-                {...register("full_name")}
-              />
-              <Input
-                label="Username"
-                placeholder="johndoe"
-                error={errors.username?.message}
-                {...register("username")}
-              />
-            </div>
-
-            <Input
-              label="Email"
-              type="email"
-              placeholder="name@example.com"
-              error={errors.email?.message}
-              {...register("email")}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Password"
-                type="password"
-                placeholder="Min 6 characters"
-                error={errors.password?.message}
-                {...register("password")}
-              />
-              <Input
-                label="Confirm Password"
-                type="password"
-                placeholder="Repeat password"
-                error={errors.confirm_password?.message}
-                {...register("confirm_password")}
-              />
-            </div>
-
-            <Select
-              label="Role"
-              options={[
-                { value: "citizen", label: "Citizen" },
-                { value: "surveyor", label: "Surveyor" },
-                { value: "revenue_officer", label: "Revenue Officer" },
-                { value: "admin", label: "Admin" },
-              ]}
-              {...register("role")}
-            />
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating account...</>
+            <Button
+              type="submit"
+              variant="saffron"
+              size="lg"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Registering...
+                </span>
               ) : (
-                "Create Account"
+                "Register"
               )}
             </Button>
-          </form>
 
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link href="/login" className="font-medium text-primary hover:underline">
-              Sign in
-            </Link>
-          </p>
+            <p className="text-center text-sm text-gov-text-light">
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className="text-gov-blue hover:underline font-medium"
+              >
+                Sign in here
+              </Link>
+            </p>
+          </form>
         </CardContent>
       </Card>
     </div>

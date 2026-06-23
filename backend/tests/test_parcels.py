@@ -1,149 +1,89 @@
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from geoalchemy2.shape import from_shape
-from shapely.geometry import Polygon
-
-from app.models.parcel import Parcel
-from app.models.user import User
-from app.core.security import create_access_token
-
-
-@pytest.fixture
-def sample_polygon():
-    return Polygon([
-        (80.0, 26.0), (80.1, 26.0), (80.1, 26.1), (80.0, 26.1), (80.0, 26.0),
-    ])
 
 
 @pytest.mark.asyncio
-async def test_create_parcel(client: AsyncClient, db_session: AsyncSession):
-    test_user = User(
-        id="00000000-0000-0000-0000-000000000010",
-        username="parcelowner",
-        email="parcel@test.com",
-        hashed_password="hash",
-        full_name="Parcel Owner",
-        role="surveyor",
-        is_active=True,
-    )
-    db_session.add(test_user)
-    await db_session.commit()
-
-    token = create_access_token({"sub": str(test_user.id)})
-    polygon = {
-        "type": "Polygon",
-        "coordinates": [[[80.0, 26.0], [80.1, 26.0], [80.1, 26.1], [80.0, 26.1], [80.0, 26.0]]],
+async def test_search_parcel(client: AsyncClient, auth_headers):
+    payload = {
+        "district": "Patna",
+        "circle": "Patna Sadar",
+        "mouza": "Rampur",
+        "plot_number": "123",
     }
-    response = await client.post(
-        "/api/v1/parcels",
-        json={
-            "pniu": "TEST123456",
-            "plot_number": "101",
-            "village": "TestVillage",
-            "tehsil": "TestTehsil",
-            "district": "TestDistrict",
-            "total_area": 1000.0,
-            "land_type": "agricultural",
-            "geometry": polygon,
-        },
-        headers={"Authorization": f"Bearer {token}"},
-    )
+    response = await client.post("/api/v1/parcels/search", json=payload, headers=auth_headers)
     assert response.status_code == 201
     data = response.json()
-    assert data["pniu"] == "TEST123456"
-    assert data["village"] == "TestVillage"
-    assert data["total_area"] == 1000.0
+    assert data["pniu"] is not None
+    assert data["district"] == "Patna"
+    assert data["plot_number"] == "123"
+    assert "geometry" in data
+    assert data["geometry"]["type"] == "Polygon"
 
 
 @pytest.mark.asyncio
-async def test_list_parcels(client: AsyncClient, db_session: AsyncSession):
-    test_user = User(
-        id="00000000-0000-0000-0000-000000000011",
-        username="listowner",
-        email="list@test.com",
-        hashed_password="hash",
-        full_name="List Owner",
-        role="surveyor",
-        is_active=True,
-    )
-    db_session.add(test_user)
-    await db_session.commit()
+async def test_search_parcel_duplicate(client: AsyncClient, auth_headers, sample_parcel):
+    payload = {
+        "district": "Patna",
+        "circle": "Patna Circle",
+        "mouza": "Rampur",
+        "plot_number": "123",
+    }
+    response = await client.post("/api/v1/parcels/search", json=payload, headers=auth_headers)
+    assert response.status_code == 200
 
-    parcel = Parcel(
-        pniu="LIST123",
-        plot_number="200",
-        village="ListVillage",
-        district="ListDistrict",
-        total_area=500.0,
-        land_type="agricultural",
-        is_active=True,
-        owner_id=test_user.id,
-    )
-    db_session.add(parcel)
-    await db_session.commit()
 
-    token = create_access_token({"sub": str(test_user.id)})
-    response = await client.get(
-        "/api/v1/parcels",
-        headers={"Authorization": f"Bearer {token}"},
-    )
+@pytest.mark.asyncio
+async def test_list_parcels(client: AsyncClient, auth_headers, sample_parcel):
+    response = await client.get("/api/v1/parcels", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
     assert data["total"] >= 1
+    assert len(data["items"]) >= 1
 
 
 @pytest.mark.asyncio
-async def test_get_parcel(client: AsyncClient, db_session: AsyncSession):
-    test_user = User(
-        id="00000000-0000-0000-0000-000000000012",
-        username="getowner",
-        email="get@test.com",
-        hashed_password="hash",
-        full_name="Get Owner",
-        role="surveyor",
-        is_active=True,
-    )
-    db_session.add(test_user)
-    await db_session.commit()
-
-    parcel = Parcel(
-        pniu="GET123",
-        plot_number="300",
-        village="GetVillage",
-        total_area=250.0,
-        land_type="residential",
-        is_active=True,
-        owner_id=test_user.id,
-    )
-    db_session.add(parcel)
-    await db_session.commit()
-
-    token = create_access_token({"sub": str(test_user.id)})
-    response = await client.get(
-        f"/api/v1/parcels/{parcel.id}",
-        headers={"Authorization": f"Bearer {token}"},
-    )
+async def test_get_parcel(client: AsyncClient, auth_headers, sample_parcel):
+    response = await client.get(f"/api/v1/parcels/{sample_parcel.id}", headers=auth_headers)
     assert response.status_code == 200
-    assert response.json()["pniu"] == "GET123"
+    data = response.json()
+    assert data["id"] == str(sample_parcel.id)
+    assert data["pniu"] == sample_parcel.pniu
 
 
 @pytest.mark.asyncio
-async def test_get_parcel_not_found(client: AsyncClient):
-    test_user = User(
-        id="00000000-0000-0000-0000-000000000013",
-        username="notfound",
-        email="notfound@test.com",
-        hashed_password="hash",
-        full_name="Not Found",
-        role="surveyor",
-        is_active=True,
-    )
-    token = create_access_token({"sub": str(test_user.id)})
-    response = await client.get(
-        "/api/v1/parcels/00000000-0000-0000-0000-000000000999",
-        headers={"Authorization": f"Bearer {token}"},
-    )
+async def test_get_parcel_not_found(client: AsyncClient, auth_headers):
+    response = await client.get("/api/v1/parcels/00000000-0000-0000-0000-000000000000", headers=auth_headers)
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_parcel_geometry(client: AsyncClient, auth_headers, sample_parcel):
+    response = await client.get(f"/api/v1/parcels/{sample_parcel.id}/geometry", headers=auth_headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_get_parcel_map(client: AsyncClient, auth_headers, sample_parcel):
+    response = await client.get(f"/api/v1/parcels/{sample_parcel.id}/map", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert "center" in data
+    assert "zoom" in data
+
+
+@pytest.mark.asyncio
+async def test_delete_parcel(client: AsyncClient, auth_headers, sample_parcel):
+    response = await client.delete(f"/api/v1/parcels/{sample_parcel.id}", headers=auth_headers)
+    assert response.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_search_requires_auth(client: AsyncClient):
+    payload = {
+        "district": "Patna",
+        "circle": "Patna Sadar",
+        "mouza": "Rampur",
+        "plot_number": "123",
+    }
+    response = await client.post("/api/v1/parcels/search", json=payload)
+    assert response.status_code == 403
